@@ -200,6 +200,11 @@
     width: auto;
 }
 
+.ext-container .related-wits-container .work-item-row .workitem-tags {
+    height: 18px;
+    overflow: hidden;
+}
+
 .ext-container .related-wits-container .work-item-row .workitem-tags .tag-list {
     list-style-type: none;
     padding: 0;
