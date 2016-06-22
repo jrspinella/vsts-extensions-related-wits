@@ -5,10 +5,12 @@ import Utils_String = require("VSS/Utils/String");
 import Utils_UI = require("VSS/Utils/UI");
 import Utils_Array = require("VSS/Utils/Array");
 import {StatusIndicator} from "VSS/Controls/StatusIndicator";
+import Dialogs = require("VSS/Controls/Dialogs");
 import {Combo} from "VSS/Controls/Combos";
 import * as WitContracts from "TFS/WorkItemTracking/Contracts";
-import {RelatedWitsControlOptions, RelatedFieldsControlOptions, Strings, IdentityReference, Constants, RelatedWitReference} from "scripts/Models";
+import {RelatedWitsControlOptions, RelatedFieldsControlOptions, Strings, IdentityReference, Constants, RelatedWitReference, AddLinkDialogResult} from "scripts/Models";
 import {WorkItemTypeColorHelper, StateColorHelper, IdentityHelper, fieldNameComparer} from "scripts/Helpers";
+import {IWorkItemFormService, WorkItemFormService} from "TFS/WorkItemTracking/Services";
 
 export class RelatedWitsControl extends Control<RelatedWitsControlOptions> {   
     private _container: JQuery;
@@ -80,10 +82,12 @@ export class RelatedWitsControl extends Control<RelatedWitsControlOptions> {
         // add link handler
         $row.find(".workitem-addlink").click((e) => {
             if (!workItem.isLinked) {
-                this._options.linkWorkItem(workItem);
-                $(e.target).css("visibility", "hidden");
-                workItem.isLinked = true;
-            }
+                this._showAddLinkDialog(workItem, (relationType: string, comment: string) => {
+                    this._options.linkWorkItem(workItem, relationType, comment);
+                    $(e.target).css("visibility", "hidden");
+                    workItem.isLinked = true;
+                });                
+            }            
         });
 
         if (workItem.isLinked) {
@@ -91,6 +95,16 @@ export class RelatedWitsControl extends Control<RelatedWitsControlOptions> {
         }
 
         this._container.append($row);
+    }
+
+    private _showAddLinkDialog(workItemToLink: RelatedWitReference, okCallback: (relationType: string, comment: string) => void) {
+        var dialogOptions: Dialogs.IModalDialogOptions = {
+                okCallback: (result: AddLinkDialogResult) => {
+                    okCallback(result.relationType.referenceName, result.comment);
+                }
+            };
+
+        var dialog: AddLinkDialog = Dialogs.show(AddLinkDialog, dialogOptions);        
     }
 
     private _createTagItemString(tags: string): string {
@@ -306,6 +320,105 @@ export class RelatedFieldsControl extends Control<RelatedFieldsControlOptions> {
             this._refNameToFieldMap[field.referenceName] = field;
             this._nameToFieldMap[field.name] = field;
         });
+    }
+}
+
+class AddLinkDialog extends Dialogs.ModalDialog {
+    private _relationTypes: WitContracts.WorkItemRelationType[];    
+    private _relationTypesMap: IDictionaryStringTo<WitContracts.WorkItemRelationType>;
+    private _comment: string;
+    private _relationType: WitContracts.WorkItemRelationType;
+
+    constructor(options?: Dialogs.IModalDialogOptions) {
+        super(options);
+    }
+
+    public initializeOptions(options?: Dialogs.IModalDialogOptions): void {
+        super.initializeOptions($.extend({
+            dialogClass: "add-link-dialog",
+            title: Strings.AddLinkDialogTitle,
+            minWidth: 500,
+            resizable: false,
+            okText: Strings.AddLinkDialogOkText
+        }, options));
+    }
+
+    public initialize(): void {
+        super.initialize();
+        this._comment = "";
+
+        this._getRelationTypes()
+            .then((relationTypes: WitContracts.WorkItemRelationType[]) => {
+                this._relationTypes = relationTypes || [];
+                this._relationType = relationTypes[0];
+                this._prepareRelationTypesMap();
+                this._render();
+            });
+    }
+
+    private _prepareRelationTypesMap(): void {
+        this._relationTypesMap = {};
+        $.each(this._relationTypes, (i: number, relationType: WitContracts.WorkItemRelationType) => {
+            this._relationTypesMap[relationType.name] = relationType;
+        });
+    }
+
+    private _render(): void {
+        var contentString = 
+            `<div class='dialog-container'>
+                <div class='relation-type'>
+                    <div class='relation-type-label'>${Strings.LinkTypeLabel}</div>
+                    <div class='relation-type-combo'></div>
+                </div>
+                <div class='relation-comment'>
+                    <div class='relation-comment-label'>${Strings.LinkCommentLabel}</div>
+                    <div class='relation-comment-combo'></div>
+                </div>
+            </div>`;
+
+        var $content = $("<div>").append(contentString);
+        this._element.append($content);
+
+        var relationTypeComboSource = $.map(this._relationTypes, (relationType: WitContracts.WorkItemRelationType) => relationType.name);
+        var relationTypeCombo = <Combo>BaseControl.createIn(Combo, $content.find(".relation-type-combo"), {
+                allowEdit: false,
+                mode: "drop",
+                type: "list",
+                value: this._relationTypes[0].name,
+                maxAutoExpandDropWidth: 200,
+                source: relationTypeComboSource,
+                indexChanged: (index: number) => {
+                    var relationType = this._relationTypesMap[relationTypeComboSource[index]];
+                    if (relationType) {
+                        this._relationType = relationType;
+                    }
+                }
+            });
+
+        var relationTypeCombo = <Combo>BaseControl.createIn(Combo, $content.find(".relation-comment-combo"), {
+                mode: "text",
+                change: () => {
+                    this._comment = relationTypeCombo.getText();
+                }
+            });
+
+        this.updateOkButton(true);
+    }
+
+    private _getRelationTypes(): IPromise<WitContracts.WorkItemRelationType[]> {
+        var defer = Q.defer();
+        WorkItemFormService.getService()
+            .then((workItemFormService: IWorkItemFormService) => workItemFormService.getWorkItemRelationTypes())
+            .then((relationTypes: WitContracts.WorkItemRelationType[]) => defer.resolve(relationTypes));
+
+        return defer.promise;
+    }
+
+    public getDialogResult(): AddLinkDialogResult {
+        return {
+            relationType: this._relationType,
+            comment: this._comment
+        }
     }
 }
 

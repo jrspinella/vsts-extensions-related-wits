@@ -1,6 +1,5 @@
 ﻿import Q = require("q");
 import Service = require("VSS/Service");
-import Utils_Core = require("VSS/Utils/Core");
 import Utils_String = require("VSS/Utils/String");
 import Utils_Array = require("VSS/Utils/Array");
 import {BaseControl} from "VSS/Controls";
@@ -37,6 +36,9 @@ export class App {
                 this._render();
             },
             onRefreshed: (args: WitExtensionContracts.IWorkItemChangedArgs) => {
+                this._render();
+            },
+            onReset: (args: WitExtensionContracts.IWorkItemChangedArgs) => {
                 this._render();
             },
         } as WitExtensionContracts.IWorkItemNotificationListener);     
@@ -102,15 +104,15 @@ export class App {
                                     workItemNavSvc.openWorkItem(workItemId, newTab);
                                 });
                             },
-                            linkWorkItem: (workItem: RelatedWitReference) => {
+                            linkWorkItem: (workItem: RelatedWitReference, relationType: string, comment: string) => {
                                 this._ensureWorkItemFormService().then((workItemFormService: IWorkItemFormService) =>  {
                                     workItemFormService.addWorkItemRelations([
                                         {
-                                            rel: "System.LinkTypes.Related-Forward",
+                                            rel: relationType, //"System.LinkTypes.Related-Forward",
                                             title: Strings.AddLinkTitle,
                                             attributes: {
                                                 isLocked: false,
-                                                comment: Strings.AddLinkComment
+                                                comment: comment
                                             },
                                             url: workItem.url
                                         }
@@ -157,9 +159,7 @@ export class App {
             );
         }
         else {
-            Utils_Core.delay(this, 0, () => {
-                defer.resolve(this._workItemFormService);
-            });
+            defer.resolve(this._workItemFormService);
         }
 
         return defer.promise;
@@ -257,16 +257,16 @@ export class App {
 
         this._createWiql(fieldsToSeek, sortByField)
             .then((data: string[]) => WitClient.getClient().queryByWiql({ query: data[1] }, data[0], null, false, 20))
-            .then((queryResults: WitContracts.WorkItemQueryResult) => this._loadWorkItems(queryResults))
+            .then((queryResults: WitContracts.WorkItemQueryResult) => this._readWorkItemsFromQueryResults(queryResults))
             .then((workItems: RelatedWitReference[]) => defer.resolve(workItems));
             
         return defer.promise;
     }
 
-    private _loadWorkItems(queryResults: WitContracts.WorkItemQueryResult): IPromise<RelatedWitReference[]> {
+    private _readWorkItemsFromQueryResults(queryResults: WitContracts.WorkItemQueryResult): IPromise<RelatedWitReference[]> {
         var defer = Q.defer();
 
-        if(queryResults.workItems && queryResults.workItems.length > 0) {
+        if (queryResults.workItems && queryResults.workItems.length > 0) {
             var workItemIdMap: IDictionaryNumberTo<WitContracts.WorkItemReference> = {};
             var workItemIds = $.map(queryResults.workItems, (elem: WitContracts.WorkItemReference) => {
                 return elem.id;
@@ -281,6 +281,7 @@ export class App {
 
             WitClient.getClient().getWorkItems(workItemIds, fields)
                 .then((workItems: WitContracts.WorkItem[]) => {
+                    // sort the workitems in the same order as they got retrieved from query
                     var sortedWorkItems = workItems.sort((w1: WitContracts.WorkItem, w2: WitContracts.WorkItem) => {
                                                 if (workItemIds.indexOf(w1.id) < workItemIds.indexOf(w2.id)) { return -1 }
                                                 if (workItemIds.indexOf(w1.id) > workItemIds.indexOf(w2.id)) { return 1 }
@@ -300,9 +301,7 @@ export class App {
                 });
         }
         else {
-            Utils_Core.delay(this, 0, () => {
-                defer.resolve([]);
-            });
+            defer.resolve([]);
         }
 
         return defer.promise;

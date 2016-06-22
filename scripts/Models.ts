@@ -3,7 +3,7 @@ import * as WitContracts from "TFS/WorkItemTracking/Contracts";
 export interface RelatedWitsControlOptions {
     workItems:  RelatedWitReference[];
     openWorkItem: (workItemId: number, newTab: boolean) => void;
-    linkWorkItem: (workItem: RelatedWitReference) => void;
+    linkWorkItem: (workItem: RelatedWitReference, relationType: string, comment: string) => void;
 }
 
 export interface RelatedWitReference extends WitContracts.WorkItem {
@@ -22,6 +22,11 @@ export interface RelatedFieldsControlOptions {
     sortByField: string;
     savePreferences: (model: UserPreferenceModel) => void;
     refresh: (fields: string[], sortByField: string) => void;
+}
+
+export interface AddLinkDialogResult {
+    relationType: WitContracts.WorkItemRelationType;
+    comment: string;
 }
 
 export class Constants {
@@ -72,8 +77,11 @@ export class Strings {
     public static NeedAtleastOneField = "At least one look up field should be specified";
     public static SortBy = "Sort By :";
     public static AddLink = "Link to this workitem";
+    public static AddLinkDialogTitle = "Add link to this workitem";
+    public static AddLinkDialogOkText = "Add Link";
     public static AddLinkTitle = "Link added by Related workitems extension";
-    public static AddLinkComment = "Added by Related workitems extension";
+    public static LinkTypeLabel = "Link type";
+    public static LinkCommentLabel = "Comment";
 }
 
 export interface IdentityReference {
