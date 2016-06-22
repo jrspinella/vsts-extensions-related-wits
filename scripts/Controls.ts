@@ -182,10 +182,13 @@ export class RelatedFieldsControl extends Control<RelatedFieldsControlOptions> {
     }
 
     private _renderSaveButton(): void {
-        var $item = $("<li class='fields-list-item save-preferences bowtie-icon bowtie-save bowtie-white'>").attr("title", Strings.NeedAtleastOneField).appendTo(this._fieldsListContainer);
+        var $item = $("<li class='fields-list-item save-preferences bowtie-icon bowtie-save bowtie-white'>").appendTo(this._fieldsListContainer);
         if (this._isDirty && this._selectedFields && this._selectedFields.length > 1) {
             $item.addClass("enabled");
             $item.attr("title", Strings.SavePreferenceTitle);
+        }
+        else if(!this._selectedFields || this._selectedFields.length <= 1) {
+            $item.attr("title", Strings.NeedAtleastOneField);
         }
         $item.click(() => {
             if ($.isFunction(this._options.savePreferences) && this._isDirty && this._selectedFields && this._selectedFields.length > 0) {
@@ -202,13 +205,17 @@ export class RelatedFieldsControl extends Control<RelatedFieldsControlOptions> {
     }
 
     private _renderRefreshButton(): void {
-        var $item = $("<li class='fields-list-item refresh-list bowtie-icon bowtie-navigate-refresh'>").attr("title", Strings.NeedAtleastOneField).appendTo(this._fieldsListContainer);
+        var $item = $("<li class='fields-list-item refresh-list bowtie-icon bowtie-navigate-refresh'>").appendTo(this._fieldsListContainer);
 
         if (this._selectedFields && this._selectedFields.length > 1) {
             // We check for selectedFields length = 1 because we dont let users remove TeamProject field. So there'll be atleast 1 field in the array
             $item.addClass("enabled");
             $item.attr("title", Strings.RefreshList);
         }
+        else if(!this._selectedFields || this._selectedFields.length <= 1) {
+            $item.attr("title", Strings.NeedAtleastOneField);
+        }
+
         $item.click(() => {
             if ($.isFunction(this._options.refresh) && this._selectedFields && this._selectedFields.length > 0) {
                 this._options.refresh(this._selectedFields, this._sortByField);
