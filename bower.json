@@ -3,7 +3,7 @@
   "description": "",
   "main": "",
   "license": "MIT",
-  "homepage": "https://github.com/mohitbagra/VSTSExtensions/tree/master/Seed",
+  "homepage": "https://github.com/mohitbagra/vsts-extensions-related-wits",
   "private": true,
   "ignore": [
     "**/.*",

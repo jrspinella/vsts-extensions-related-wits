@@ -3,15 +3,14 @@
     "id": "related-workitems",
     "version": "1.0.0",
     "name": "Related Work items",
-    "description": "Get related work items for your current work item.",
+    "description": "Gets a list of related work items for your current work item.",
     "publisher": "mohitbagra",
     "public": false,
     "icons": {
         "default": "img/logo.png"
     },
     "scopes": [ 
-    	"vso.work", 
-    	"vso.work_write"
+    	"vso.work"
 	 ],
     "targets": [
         {
