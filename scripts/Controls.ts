@@ -7,12 +7,12 @@ import Utils_Array = require("VSS/Utils/Array");
 import {StatusIndicator} from "VSS/Controls/StatusIndicator";
 import {Combo} from "VSS/Controls/Combos";
 import * as WitContracts from "TFS/WorkItemTracking/Contracts";
-import {RelatedWitsControlOptions, RelatedFieldsControlOptions, Strings, IdentityReference, Constants} from "scripts/Models";
+import {RelatedWitsControlOptions, RelatedFieldsControlOptions, Strings, IdentityReference, Constants, RelatedWitReference} from "scripts/Models";
 import {WorkItemTypeColorHelper, StateColorHelper, IdentityHelper, fieldNameComparer} from "scripts/Helpers";
 
 export class RelatedWitsControl extends Control<RelatedWitsControlOptions> {   
     private _container: JQuery;
-    private _workItems: WitContracts.WorkItem[];
+    private _workItems: RelatedWitReference[];
     private _statusIndicator: StatusIndicator;
     
     constructor(options?: RelatedWitsControlOptions) {
@@ -26,12 +26,12 @@ export class RelatedWitsControl extends Control<RelatedWitsControlOptions> {
         this.refresh(this._options.workItems || []);
     }
 
-    public refresh(workItems: WitContracts.WorkItem[]): void {
+    public refresh(workItems: RelatedWitReference[]): void {
         this._container.empty();
         this._workItems = workItems;
 
         if (this._workItems && this._workItems.length > 0) {
-            $.each(this._workItems, (i: number, workItem: WitContracts.WorkItem) => {
+            $.each(this._workItems, (i: number, workItem: RelatedWitReference) => {
                 this._renderWorkItem(workItem);
             });   
         }
@@ -40,7 +40,7 @@ export class RelatedWitsControl extends Control<RelatedWitsControlOptions> {
         }
     }
 
-    private _renderWorkItem(workItem: WitContracts.WorkItem): void {
+    private _renderWorkItem(workItem: RelatedWitReference): void {
         var workItemType = Utils_String.htmlEncode(workItem.fields["System.WorkItemType"]);
         var title = Utils_String.htmlEncode(workItem.fields["System.Title"] || "");
         var id = workItem.id;
@@ -56,6 +56,7 @@ export class RelatedWitsControl extends Control<RelatedWitsControlOptions> {
         var rowHtmlString = 
             `<div class='work-item-row' title='${workItemType}: ${title}'>
                 <div class='work-item-row-header'>
+                    <div class='workitem-addlink bowtie-icon bowtie-link' title='${Strings.AddLink}'></div>
                     <div class='workitem-color' style='background-color: ${WorkItemTypeColorHelper.parseColor(workItemType)}'></div>
                     <div class='workitem-id'><a>${id}</a></div>
                     <div class='workitem-title'>${title}</div>
@@ -65,14 +66,29 @@ export class RelatedWitsControl extends Control<RelatedWitsControlOptions> {
                     <div class='workitem-assignedTo'>
                         <img src='${identityImageUrl}' />${Utils_String.htmlEncode(assignedTo.displayName)}
                     </div>
-                    <div class='workitem-tags'>${this._createTagItemString(tags)}</div>
+                    <div class='workitem-tags'>${this._createTagItemString(tags)}</div>                    
                 </div>
             </div>`;
             
         var $row = $("<div>").append(rowHtmlString);
+
+        // open workitem handler
         $row.find(".workitem-id").click((e) => {
             this._options.openWorkItem(id, e.ctrlKey);
         });
+
+        // add link handler
+        $row.find(".workitem-addlink").click((e) => {
+            if (!workItem.isLinked) {
+                this._options.linkWorkItem(workItem);
+                $(e.target).css("visibility", "hidden");
+                workItem.isLinked = true;
+            }
+        });
+
+        if (workItem.isLinked) {
+            $row.find(".workitem-addlink").css("visibility", "hidden");
+        }
 
         this._container.append($row);
     }

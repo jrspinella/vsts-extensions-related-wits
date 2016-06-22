@@ -125,7 +125,7 @@
 
 .ext-container .related-wits-container .work-item-row .work-item-row-subtitle {
     font-size: 12px;
-    margin-left: 12px;
+    margin-left: 22px;
     color: #6D6D6D;
 }
 
@@ -143,6 +143,14 @@
     height: 18px;
     vertical-align: bottom;
     margin-right: 3px;
+}
+
+.ext-container .related-wits-container .work-item-row .workitem-addlink {
+    cursor: pointer;
+    margin-right: 10px;
+    float: left;
+    display: block;
+    width: auto;
 }
 
 .ext-container .related-wits-container .work-item-row .workitem-color,
@@ -184,8 +192,7 @@
     margin-right: 20px;
 }
 
-.ext-container .related-wits-container .work-item-row .workitem-title,
-.ext-container .related-wits-container .work-item-row .workitem-tags {
+.ext-container .related-wits-container .work-item-row .workitem-title {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

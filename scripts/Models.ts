@@ -1,8 +1,14 @@
 import * as WitContracts from "TFS/WorkItemTracking/Contracts";
 
 export interface RelatedWitsControlOptions {
-    workItems:  WitContracts.WorkItem[];
+    workItems:  RelatedWitReference[];
     openWorkItem: (workItemId: number, newTab: boolean) => void;
+    linkWorkItem: (workItem: RelatedWitReference) => void;
+}
+
+export interface RelatedWitReference extends WitContracts.WorkItem {
+    url: string;
+    isLinked: boolean;
 }
 
 export interface UserPreferenceModel {
@@ -65,6 +71,9 @@ export class Strings {
     public static RemoveItemTitle = "Remove field";
     public static NeedAtleastOneField = "At least one look up field should be specified";
     public static SortBy = "Sort By :";
+    public static AddLink = "Link to this workitem";
+    public static AddLinkTitle = "Link added by Related workitems extension";
+    public static AddLinkComment = "Added by Related workitems extension";
 }
 
 export interface IdentityReference {

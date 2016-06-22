@@ -10,7 +10,7 @@ import {IWorkItemFormService, WorkItemFormService, WorkItemFormNavigationService
 import * as WitClient from "TFS/WorkItemTracking/RestClient"
 import {StatusIndicator} from "VSS/Controls/StatusIndicator";
 import {RelatedWitsControl, RelatedFieldsControl} from "scripts/Controls";
-import {RelatedWitsControlOptions, RelatedFieldsControlOptions, Constants, Strings, UserPreferenceModel} from "scripts/Models";
+import {RelatedWitsControlOptions, RelatedFieldsControlOptions, Constants, Strings, UserPreferenceModel, RelatedWitReference} from "scripts/Models";
 import {UserPreferences} from "scripts/UserPreferences";
 
 export class App {
@@ -92,7 +92,7 @@ export class App {
         // get related work items based on fields to seek
         this._getWorkItems(fieldsToSeek, sortByField)
             .then(
-                (workItems: WitContracts.WorkItem[]) => {
+                (workItems: RelatedWitReference[]) => {
                     if (!this._relatedWitsControl) {                                 
                         this._relatedWitsControl = <RelatedWitsControl>BaseControl.createIn(RelatedWitsControl, $(".related-wits-container"), {
                             workItems: workItems,
@@ -100,6 +100,21 @@ export class App {
                                 WorkItemFormNavigationService.getService().then((workItemNavSvc: IWorkItemFormNavigationService) => {
                                     // if control is pressed, open the work item in a new tab
                                     workItemNavSvc.openWorkItem(workItemId, newTab);
+                                });
+                            },
+                            linkWorkItem: (workItem: RelatedWitReference) => {
+                                this._ensureWorkItemFormService().then((workItemFormService: IWorkItemFormService) =>  {
+                                    workItemFormService.addWorkItemRelations([
+                                        {
+                                            rel: "System.LinkTypes.Related-Forward",
+                                            title: Strings.AddLinkTitle,
+                                            attributes: {
+                                                isLocked: false,
+                                                comment: Strings.AddLinkComment
+                                            },
+                                            url: workItem.url
+                                        }
+                                    ]);
                                 });
                             }
                         });
@@ -237,27 +252,32 @@ export class App {
         return defer.promise;
     }
 
-    private _getWorkItems(fieldsToSeek: string[], sortByField: string): IPromise<WitContracts.WorkItem[]> {
+    private _getWorkItems(fieldsToSeek: string[], sortByField: string): IPromise<RelatedWitReference[]> {
         var defer = Q.defer();
 
         this._createWiql(fieldsToSeek, sortByField)
             .then((data: string[]) => WitClient.getClient().queryByWiql({ query: data[1] }, data[0], null, false, 20))
             .then((queryResults: WitContracts.WorkItemQueryResult) => this._loadWorkItems(queryResults))
-            .then((workItems: WitContracts.WorkItem[]) => defer.resolve(workItems));
+            .then((workItems: RelatedWitReference[]) => defer.resolve(workItems));
             
         return defer.promise;
     }
 
-    private _loadWorkItems(queryResults: WitContracts.WorkItemQueryResult): IPromise<WitContracts.WorkItem[]> {
+    private _loadWorkItems(queryResults: WitContracts.WorkItemQueryResult): IPromise<RelatedWitReference[]> {
         var defer = Q.defer();
 
         if(queryResults.workItems && queryResults.workItems.length > 0) {
+            var workItemIdMap: IDictionaryNumberTo<WitContracts.WorkItemReference> = {};
             var workItemIds = $.map(queryResults.workItems, (elem: WitContracts.WorkItemReference) => {
                 return elem.id;
             });
             var fields = $.map(queryResults.columns, (elem: WitContracts.WorkItemFieldReference) => {
                 return elem.referenceName;
             });
+
+            $.each(queryResults.workItems, (i:number, w: WitContracts.WorkItemReference) => {
+                workItemIdMap[w.id] = w;
+            })
 
             WitClient.getClient().getWorkItems(workItemIds, fields)
                 .then((workItems: WitContracts.WorkItem[]) => {
@@ -266,7 +286,17 @@ export class App {
                                                 if (workItemIds.indexOf(w1.id) > workItemIds.indexOf(w2.id)) { return 1 }
                                                 return 0;
                                             });
-                    defer.resolve(sortedWorkItems);
+
+                    this._ensureWorkItemFormService()
+                            .then((workItemFormService: IWorkItemFormService) => workItemFormService.getWorkItemRelations())
+                            .then((relations: WitContracts.WorkItemRelation[]) => {
+                                defer.resolve($.map(sortedWorkItems, (w: WitContracts.WorkItem) => $.extend(w, { 
+                                    url: workItemIdMap[w.id].url,
+                                    isLinked: Utils_Array.arrayContains(w.url, relations, (url: string, relation: WitContracts.WorkItemRelation) => {
+                                        return Utils_String.equals(relation.url, url, true);
+                                    })
+                                })));
+                            });
                 });
         }
         else {
