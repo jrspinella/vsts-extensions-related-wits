@@ -1,4 +1,4 @@
-## Get related work items? - VSTS Work Item Form Extension ##
+## Get related work items - VSTS Work Item Form Extension ##
 
 A work item form extension that gets a list of related work items for the current work item opened in work item form.
 
