@@ -10,3 +10,7 @@ This extension adds a page to work item form which shows a list of related work 
 
 In the screenshot above, the extension loads work items which share same field values as "Work Item type", "State", "Area Path" and "Tags", sorted by ChangedDate field. It does exactly what a VSTS query does, but in a much simpler and faster way.
 Users can choose to change the look up fields and "order by" field and save these settings for the current work item type. The next time they open up the form, the extension will read user's settings and retrieve the work item list based on them.
+
+![Group](img/AddLinkExample.png)
+
+Users can also add a link to any of the workitems in the list directly from the extension, as shown in the screenshot above.
