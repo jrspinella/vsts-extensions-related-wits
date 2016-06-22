@@ -28,22 +28,16 @@
     },
      "links": {
         "home": {
-            "uri": "https://github.com/mohitbagra/VSTSExtensions/tree/master/Related%20WITs"
-        },
-        "getstarted": {
-            "uri": "https://github.com/mohitbagra/VSTSExtensions/tree/master/Related%20WITs"
+            "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits"
         },
         "learn": {
-            "uri": "https://github.com/mohitbagra/VSTSExtensions/tree/master/Related%20WITs"
-        },
-        "support": {
-            "uri": "https://github.com/mohitbagra/VSTSExtensions/tree/master/Related%20WITs"
+            "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits/wiki"
         },
         "repository": {
-            "uri": "https://github.com/mohitbagra/VSTSExtensions/tree/master/Related%20WITs"
+            "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits"
         },
         "issues": {
-            "uri": "https://github.com/mohitbagra/VSTSExtensions/issues"
+            "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits/issues"
         }
     },
     "branding": {

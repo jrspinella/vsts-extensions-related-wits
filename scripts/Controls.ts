@@ -167,7 +167,7 @@ export class RelatedFieldsControl extends Control<RelatedFieldsControlOptions> {
                 allowEdit: false,
                 mode: "drop",
                 type: "list",
-                value: this._sortByField,
+                value: this._refNameToFieldMap[this._sortByField] ? this._refNameToFieldMap[this._sortByField].name : "",
                 maxAutoExpandDropWidth: 200,
                 source: comboSource,
                 indexChanged: (index: number) => {
