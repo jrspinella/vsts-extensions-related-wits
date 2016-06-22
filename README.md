@@ -13,4 +13,4 @@ Users can choose to change the look up fields and "order by" field and save thes
 
 ![Group](img/AddLinkExample.png)
 
-Users can also add a link to any of the workitems in the list directly from the extension, as shown in the screenshot above.
+Users can also add a link to any of the workitems in the list directly from the extension by clicking on the link icon on the left of work item type color bar, as shown in the screenshot above.
