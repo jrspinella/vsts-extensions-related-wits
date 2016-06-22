@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <script src="scripts/vss-web-extension-sdk/VSS.SDK.js"></script>
+    <link rel="stylesheet" type="text/css" href="styles/index.css">
+</head>
+
+<body>
+    <script type="text/javascript">
+        // Initialize framework 
+        VSS.init({
+            explicitNotifyLoaded: true,
+            usePlatformScripts: true,
+            configureModuleLoader: true
+        });
+        
+        // Load main entry point for extension
+        VSS.require(["scripts/App"], function (App) {
+            var app = new App.App();
+            app.initialize();
+            VSS.notifyLoadSucceeded();
+        });
+    </script>
+
+    <div class="ext-container">
+        <h3 class="new-workitem-message">Please save the workitem to get the related work items.</h3>
+        <div class="related-fields-container"></div>
+        <div class="related-wits-container"></div>        
+    </div>
+</body>
+</html>

@@ -1,0 +1,88 @@
+{
+    "manifestVersion": 1,
+    "id": "related-workitems",
+    "version": "1.0.0",
+    "name": "Related Work items",
+    "description": "Get related work items for your current work item.",
+    "publisher": "mohitbagra",
+    "public": false,
+    "icons": {
+        "default": "img/logo.png"
+    },
+    "scopes": [ 
+    	"vso.work", 
+    	"vso.work_write"
+	 ],
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
+    "tags": [
+        "Work Item"
+    ],
+    "content": {
+        "details": {
+            "path": "README.md"
+        }
+    },
+     "links": {
+        "home": {
+            "uri": "https://github.com/mohitbagra/VSTSExtensions/tree/master/Related%20WITs"
+        },
+        "getstarted": {
+            "uri": "https://github.com/mohitbagra/VSTSExtensions/tree/master/Related%20WITs"
+        },
+        "learn": {
+            "uri": "https://github.com/mohitbagra/VSTSExtensions/tree/master/Related%20WITs"
+        },
+        "support": {
+            "uri": "https://github.com/mohitbagra/VSTSExtensions/tree/master/Related%20WITs"
+        },
+        "repository": {
+            "uri": "https://github.com/mohitbagra/VSTSExtensions/tree/master/Related%20WITs"
+        },
+        "issues": {
+            "uri": "https://github.com/mohitbagra/VSTSExtensions/issues"
+        }
+    },
+    "branding": {
+        "color": "#5C2D91",
+        "theme": "dark"
+    },
+    "files": [
+        {
+            "path": "img",
+            "addressable": true
+        },
+        {
+            "path": "scripts",
+            "addressable": true
+        },
+        {
+            "path": "index.html",
+            "addressable": true
+        },
+        {
+            "path": "styles",
+            "addressable": true
+        }
+    ],
+    "categories": [
+        "Plan and track"
+    ],
+    "contributions": [
+        {
+            "id": "related-workitems-form-page",
+            "type": "ms.vss-work-web.work-item-form-page",
+            "description": "Related work items page",
+            "targets": [
+                "ms.vss-work-web.work-item-form"
+            ],
+            "properties": {
+                "name": "Related Work items",
+                "uri": "index.html"
+            }
+        }
+    ]
+}
