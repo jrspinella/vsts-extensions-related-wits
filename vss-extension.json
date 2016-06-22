@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "related-workitems",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "name": "Related Work items",
     "description": "Gets a list of related work items for your current work item.",
     "publisher": "mohitbagra",
@@ -29,13 +29,19 @@
         "home": {
             "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits"
         },
+        "getstarted": {
+            "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits"
+        },
         "learn": {
-            "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits/wiki"
+            "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits"
         },
         "repository": {
             "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits"
         },
         "issues": {
+            "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits/issues"
+        },
+        "support": {
             "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits/issues"
         }
     },
