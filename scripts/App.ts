@@ -13,11 +13,7 @@ import {RelatedWitsControl, RelatedFieldsControl} from "scripts/Controls";
 import {RelatedWitsControlOptions, RelatedFieldsControlOptions, Constants, Strings, UserPreferenceModel} from "scripts/Models";
 import {UserPreferences} from "scripts/UserPreferences";
 
-export class App {   
-    // private _wiql: string = 
-    //     "SELECT [System.Id],[System.WorkItemType],[System.Title],[System.AssignedTo],[System.State],[System.Tags] " + 
-    //     "FROM WorkItems WHERE [System.TeamProject] = @project AND [System.WorkItemType] = '{0}' AND [System.Tags] CONTAINS '1' AND [System.State] = 'Active' AND [System.AreaPath] = 'Personal'"
-    // ";
+export class App {
     private _statusIndicator: StatusIndicator;
     private _relatedFieldsControl: RelatedFieldsControl;
     private _relatedWitsControl: RelatedWitsControl;    
