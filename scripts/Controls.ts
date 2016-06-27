@@ -185,7 +185,8 @@ export class RelatedFieldsControl extends Control<RelatedFieldsControlOptions> {
         var $item = $("<li class='fields-list-item sort-by-field'>").appendTo(this._fieldsListContainer);
         var comboSource = 
                 $.map(this._allFields, (f: WitContracts.WorkItemField) => {
-                    if (Utils_Array.contains(Constants.SortableFieldTypes, f.type)) {
+                    if (Utils_Array.contains(Constants.SortableFieldTypes, f.type) 
+                        && !Utils_Array.contains(Constants.ExcludedSortableFields, f.referenceName)) {
                         return f.name;
                     }
                     else {

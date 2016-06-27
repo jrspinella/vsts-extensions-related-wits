@@ -64,6 +64,14 @@ export class Constants {
         WitContracts.FieldType.String,
         WitContracts.FieldType.TreePath
     ];
+
+    public static ExcludedSortableFields = [
+        "System.AttachedFiles",
+        "System.BISLinks",
+        "System.LinkedFiles",
+        "System.PersonId",
+        "System.RelatedLinks"
+    ];
 }
 
 export class Strings {
