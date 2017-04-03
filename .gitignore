@@ -1,5 +1,10 @@
-bower_components
+dist
 node_modules
 typings
-**/scripts/**/*.js
 *.vsix
+.vscode/*.db
+.vscode/*.db-wal
+.sass-cache
+css/*.css
+css/*.css.map
+npm-debug.log

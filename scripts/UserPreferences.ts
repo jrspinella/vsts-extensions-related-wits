@@ -1,27 +1,32 @@
-import Q = require("q");
 import Service = require("VSS/Service");
-import {Constants, UserPreferenceModel} from "scripts/Models";
+import {Constants, UserPreferenceModel} from "./Models";
 
 export class UserPreferences {
     /**
     * Read user extension data for a particular work item type
     * @param workItemType
     */
-    public static readUserSetting(workItemType: string): IPromise<UserPreferenceModel> {
-        var defer = Q.defer();
-
-        VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData)
-            .then((dataService: IExtensionDataService) => dataService.getValue<UserPreferenceModel>(`${Constants.StorageKey}_${workItemType}`, Constants.UserScope))
-            .then((model: UserPreferenceModel) => defer.resolve(model || {}));
-
-        return defer.promise;
+    public static async readUserSetting(workItemType: string): Promise<UserPreferenceModel> {
+        const dataService = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
+        try {
+            const model = await dataService.getValue<UserPreferenceModel>(`${Constants.StorageKey}_${workItemType}`, Constants.UserScope);
+            return model;
+        }
+        catch (e) {
+            return null;
+        }
     }
 
     /**
     * Write user extension data for a particular work item type
     */
-    public static writeUserSetting(workItemType: string, model: UserPreferenceModel): void {
-        VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData)
-            .then((dataService: IExtensionDataService) => dataService.setValue<UserPreferenceModel>(`${Constants.StorageKey}_${workItemType}`, model, Constants.UserScope));
+    public static async writeUserSetting(workItemType: string, model: UserPreferenceModel): Promise<void> {
+        const dataService = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
+        try {
+            await dataService.setValue<UserPreferenceModel>(`${Constants.StorageKey}_${workItemType}`, model, Constants.UserScope);
+        }
+        catch (e) {
+            return null;
+        }
     }
 }

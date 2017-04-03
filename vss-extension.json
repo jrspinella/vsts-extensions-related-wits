@@ -1,11 +1,10 @@
 {
     "manifestVersion": 1,
     "id": "related-workitems",
-    "version": "1.0.1",
+    "version": "1.1.1",
     "name": "Related Work items",
     "description": "Gets a list of related work items for your current work item.",
     "publisher": "mohitbagra",
-    "public": true,
     "icons": {
         "default": "img/logo.png"
     },
@@ -51,11 +50,15 @@
     },
     "files": [
         {
-            "path": "img",
+            "path": "scripts",
             "addressable": true
         },
         {
-            "path": "scripts",
+            "path": "css",
+            "addressable": true
+        },
+        {
+            "path": "img",
             "addressable": true
         },
         {
@@ -63,7 +66,7 @@
             "addressable": true
         },
         {
-            "path": "styles",
+            "path": "README.md",
             "addressable": true
         }
     ],

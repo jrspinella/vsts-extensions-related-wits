@@ -1,5 +1,5 @@
 import * as Utils_String from "VSS/Utils/String";
-import {IdentityReference} from "scripts/Models";
+import {IdentityReference} from "./Models";
 
 export function fieldNameComparer(a: string, b: string): number {
     let aUpper = a.toUpperCase();

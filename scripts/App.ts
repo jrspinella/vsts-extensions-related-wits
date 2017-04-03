@@ -1,5 +1,6 @@
-﻿import Q = require("q");
-import Service = require("VSS/Service");
+﻿// styles
+import "../css/app.scss";
+
 import Utils_String = require("VSS/Utils/String");
 import Utils_Array = require("VSS/Utils/Array");
 import {BaseControl} from "VSS/Controls";
@@ -8,9 +9,10 @@ import * as WitContracts from "TFS/WorkItemTracking/Contracts";
 import {IWorkItemFormService, WorkItemFormService, WorkItemFormNavigationService, IWorkItemFormNavigationService} from "TFS/WorkItemTracking/Services";
 import * as WitClient from "TFS/WorkItemTracking/RestClient"
 import {StatusIndicator} from "VSS/Controls/StatusIndicator";
-import {RelatedWitsControl, RelatedFieldsControl} from "scripts/Controls";
-import {RelatedWitsControlOptions, RelatedFieldsControlOptions, Constants, Strings, UserPreferenceModel, RelatedWitReference} from "scripts/Models";
-import {UserPreferences} from "scripts/UserPreferences";
+
+import {RelatedWitsControl, RelatedFieldsControl} from "./Controls";
+import {RelatedWitsControlOptions, RelatedFieldsControlOptions, Constants, Strings, UserPreferenceModel, RelatedWitReference} from "./Models";
+import {UserPreferences} from "./UserPreferences";
 
 export class App {
     private _statusIndicator: StatusIndicator;
@@ -109,7 +111,6 @@ export class App {
                                     workItemFormService.addWorkItemRelations([
                                         {
                                             rel: relationType, //"System.LinkTypes.Related-Forward",
-                                            title: Strings.AddLinkTitle,
                                             attributes: {
                                                 isLocked: false,
                                                 comment: comment
@@ -147,42 +148,26 @@ export class App {
         }
     }
 
-    private _ensureWorkItemFormService(): IPromise<IWorkItemFormService> {
-        var defer = Q.defer();
-
+    private async _ensureWorkItemFormService(): Promise<IWorkItemFormService> {
         if (!this._workItemFormService) {
-            WorkItemFormService.getService().then(
-                (workItemFormService: IWorkItemFormService) => {
-                    this._workItemFormService = workItemFormService;
-                    defer.resolve(this._workItemFormService);
-                }
-            );
+            this._workItemFormService = await WorkItemFormService.getService();
+            return this._workItemFormService;            
         }
         else {
-            defer.resolve(this._workItemFormService);
+            return this._workItemFormService;
         }
-
-        return defer.promise;
     }
 
-    private _getWorkItemFields(): IPromise<WitContracts.WorkItemField[]> {
-        var defer = Q.defer();
-
-        this._ensureWorkItemFormService()
-            .then((workItemFormService: IWorkItemFormService) => workItemFormService.getFields())
-            .then((fields: WitContracts.WorkItemField[]) => defer.resolve(fields));
-
-        return defer.promise;
+    private async _getWorkItemFields(): Promise<WitContracts.WorkItemField[]> {
+        let workItemFormService = await this._ensureWorkItemFormService();
+        let fields = await workItemFormService.getFields();
+        return fields;
     }
 
-    private _getWorkItemType(): IPromise<string> {
-        var defer = Q.defer();
-
-        this._ensureWorkItemFormService()
-            .then((workItemFormService: IWorkItemFormService) => workItemFormService.getFieldValue("System.WorkItemType"))
-            .then((workItemType: string) => defer.resolve(workItemType));
-
-        return defer.promise;
+    private async _getWorkItemType(): Promise<string> {
+        let workItemFormService = await this._ensureWorkItemFormService();
+        let workItemType = await workItemFormService.getFieldValue("System.WorkItemType") as string;
+        return workItemType;
     }
 
     private _clear(): void {
@@ -197,75 +182,64 @@ export class App {
         }
     }
 
-    private _createWiql(fieldsToSeek: string[], sortByField: string): IPromise<string[]> {
-        var defer = Q.defer();
+    private async _createWiql(fieldsToSeek: string[], sortByField: string): Promise<string[]> {
         let fieldValuesToRead = fieldsToSeek.concat(["System.ID"]);
-        this._ensureWorkItemFormService()
-            .then((workItemFormService: IWorkItemFormService) => workItemFormService.getFieldValues(fieldValuesToRead))
-            .then((fieldValues: IDictionaryStringTo<Object>) => {    
-                let witId = fieldValues["System.ID"]; 
-                // Generate fields to retrieve part
-                let fieldsToRetrieveString: string = "";
-                $.each(Constants.DEFAULT_FIELDS_TO_RETRIEVE, (i: number, fieldRefName: string) => {
-                    fieldsToRetrieveString = `${fieldsToRetrieveString}[${fieldRefName}],`
-                });
-                // remove last comma
-                fieldsToRetrieveString = fieldsToRetrieveString.substring(0, fieldsToRetrieveString.length - 1);
+        let workItemFormService = await this._ensureWorkItemFormService()
+        let fieldValues = await workItemFormService.getFieldValues(fieldValuesToRead);
+        let witId = fieldValues["System.ID"]; 
+        // Generate fields to retrieve part
+        let fieldsToRetrieveString: string = "";
+        $.each(Constants.DEFAULT_FIELDS_TO_RETRIEVE, (i: number, fieldRefName: string) => {
+            fieldsToRetrieveString = `${fieldsToRetrieveString}[${fieldRefName}],`
+        });
+        // remove last comma
+        fieldsToRetrieveString = fieldsToRetrieveString.substring(0, fieldsToRetrieveString.length - 1);
 
-                // Generate fields to seek part
-                let fieldsToSeekString: string = "";
-                $.each(fieldsToSeek, (i: number, fieldRefName: string) => {
-                    let fieldValue = fieldValues[fieldRefName];
-                    if (Utils_String.equals(fieldRefName, "System.Tags", true) && fieldValue) {
-                        fieldsToSeekString = fieldsToSeekString + " (";
-                        let fieldValueStr = fieldValue.toString();
-                        $.each(fieldValueStr.split(";"), (i: number, v: string) => {
-                            fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] CONTAINS '${v}' OR`
-                        });
-                        if (fieldsToSeekString) {
-                            // remove last OR
-                            fieldsToSeekString = fieldsToSeekString.substring(0, fieldsToSeekString.length - 3) + ") AND";
-                        }
-                    }
-                    else if (!Utils_String.equals(fieldRefName, "System.TeamProject", true)) {
-                        if (Utils_String.equals(typeof(fieldValue), "string", true) && fieldValue) {
-                            fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] = '${fieldValue}' AND`
-                        }
-                        else if (Utils_String.equals(typeof(fieldValue), "number", true) && fieldValue != null) {
-                            fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] = ${fieldValue} AND`
-                        }
-                        else if (Utils_String.equals(typeof(fieldValue), "boolean", true) && fieldValue != null) {
-                            fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] = ${fieldValue} AND`
-                        }
-                    }
+        // Generate fields to seek part
+        let fieldsToSeekString: string = "";
+        $.each(fieldsToSeek, (i: number, fieldRefName: string) => {
+            let fieldValue = fieldValues[fieldRefName];
+            if (Utils_String.equals(fieldRefName, "System.Tags", true) && fieldValue) {
+                fieldsToSeekString = fieldsToSeekString + " (";
+                let fieldValueStr = fieldValue.toString();
+                $.each(fieldValueStr.split(";"), (i: number, v: string) => {
+                    fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] CONTAINS '${v}' OR`
                 });
                 if (fieldsToSeekString) {
                     // remove last OR
-                    fieldsToSeekString = fieldsToSeekString.substring(0, fieldsToSeekString.length - 4);
+                    fieldsToSeekString = fieldsToSeekString.substring(0, fieldsToSeekString.length - 3) + ") AND";
                 }
-                let fieldsToSeekPredicate = fieldsToSeekString ? `AND ${fieldsToSeekString}` : "";
-                let wiql = `SELECT ${fieldsToRetrieveString} FROM workitems where [System.TeamProject] = @project AND [System.ID] <> ${witId} ${fieldsToSeekPredicate} order by [${sortByField}] desc`;
+            }
+            else if (!Utils_String.equals(fieldRefName, "System.TeamProject", true)) {
+                if (Utils_String.equals(typeof(fieldValue), "string", true) && fieldValue) {
+                    fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] = '${fieldValue}' AND`
+                }
+                else if (Utils_String.equals(typeof(fieldValue), "number", true) && fieldValue != null) {
+                    fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] = ${fieldValue} AND`
+                }
+                else if (Utils_String.equals(typeof(fieldValue), "boolean", true) && fieldValue != null) {
+                    fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] = ${fieldValue} AND`
+                }
+            }
+        });
+        if (fieldsToSeekString) {
+            // remove last OR
+            fieldsToSeekString = fieldsToSeekString.substring(0, fieldsToSeekString.length - 4);
+        }
+        let fieldsToSeekPredicate = fieldsToSeekString ? `AND ${fieldsToSeekString}` : "";
+        let wiql = `SELECT ${fieldsToRetrieveString} FROM workitems where [System.TeamProject] = @project AND [System.ID] <> ${witId} ${fieldsToSeekPredicate} order by [${sortByField}] desc`;
 
-                defer.resolve([fieldValues["System.TeamProject"], wiql]);
-            });
-
-        return defer.promise;
+        return [fieldValues["System.TeamProject"] as string, wiql];
     }
 
-    private _getWorkItems(fieldsToSeek: string[], sortByField: string): IPromise<RelatedWitReference[]> {
-        var defer = Q.defer();
+    private async _getWorkItems(fieldsToSeek: string[], sortByField: string): Promise<RelatedWitReference[]> {
+        let data: string[] = await this._createWiql(fieldsToSeek, sortByField)
+        let queryResults = await WitClient.getClient().queryByWiql({ query: data[1] }, data[0], null, false, 20);
+        return this._readWorkItemsFromQueryResults(queryResults);
 
-        this._createWiql(fieldsToSeek, sortByField)
-            .then((data: string[]) => WitClient.getClient().queryByWiql({ query: data[1] }, data[0], null, false, 20))
-            .then((queryResults: WitContracts.WorkItemQueryResult) => this._readWorkItemsFromQueryResults(queryResults))
-            .then((workItems: RelatedWitReference[]) => defer.resolve(workItems));
-            
-        return defer.promise;
     }
 
-    private _readWorkItemsFromQueryResults(queryResults: WitContracts.WorkItemQueryResult): IPromise<RelatedWitReference[]> {
-        var defer = Q.defer();
-
+    private async _readWorkItemsFromQueryResults(queryResults: WitContracts.WorkItemQueryResult): Promise<RelatedWitReference[]> {
         if (queryResults.workItems && queryResults.workItems.length > 0) {
             var workItemIdMap: IDictionaryNumberTo<WitContracts.WorkItemReference> = {};
             var workItemIds = $.map(queryResults.workItems, (elem: WitContracts.WorkItemReference) => {
@@ -279,31 +253,25 @@ export class App {
                 workItemIdMap[w.id] = w;
             })
 
-            WitClient.getClient().getWorkItems(workItemIds, fields)
-                .then((workItems: WitContracts.WorkItem[]) => {
-                    // sort the workitems in the same order as they got retrieved from query
-                    var sortedWorkItems = workItems.sort((w1: WitContracts.WorkItem, w2: WitContracts.WorkItem) => {
-                                                if (workItemIds.indexOf(w1.id) < workItemIds.indexOf(w2.id)) { return -1 }
-                                                if (workItemIds.indexOf(w1.id) > workItemIds.indexOf(w2.id)) { return 1 }
-                                                return 0;
-                                            });
+            let workItems = await WitClient.getClient().getWorkItems(workItemIds, fields);
+            // sort the workitems in the same order as they got retrieved from query
+            var sortedWorkItems = workItems.sort((w1: WitContracts.WorkItem, w2: WitContracts.WorkItem) => {
+                                        if (workItemIds.indexOf(w1.id) < workItemIds.indexOf(w2.id)) { return -1 }
+                                        if (workItemIds.indexOf(w1.id) > workItemIds.indexOf(w2.id)) { return 1 }
+                                        return 0;
+                                    });
 
-                    this._ensureWorkItemFormService()
-                            .then((workItemFormService: IWorkItemFormService) => workItemFormService.getWorkItemRelations())
-                            .then((relations: WitContracts.WorkItemRelation[]) => {
-                                defer.resolve($.map(sortedWorkItems, (w: WitContracts.WorkItem) => $.extend(w, { 
-                                    url: workItemIdMap[w.id].url,
-                                    isLinked: Utils_Array.arrayContains(w.url, relations, (url: string, relation: WitContracts.WorkItemRelation) => {
-                                        return Utils_String.equals(relation.url, url, true);
-                                    })
-                                })));
-                            });
-                });
+            let workItemFormService = await this._ensureWorkItemFormService();
+            let relations = await workItemFormService.getWorkItemRelations();
+            return $.map(sortedWorkItems, (w: WitContracts.WorkItem) => $.extend(w, { 
+                url: workItemIdMap[w.id].url,
+                isLinked: Utils_Array.arrayContains(w.url, relations, (url: string, relation: WitContracts.WorkItemRelation) => {
+                    return Utils_String.equals(relation.url, url, true);
+                })
+            }));
         }
         else {
-            defer.resolve([]);
+            return [];
         }
-
-        return defer.promise;
     }
 }

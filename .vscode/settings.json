@@ -1,9 +1,21 @@
 // Place your settings in this file to overwrite default and user settings.
 {
+    "typescript.tsdk": "./node_modules/typescript/lib",
     "files.exclude": {
         "**/*.js": {
-            "when": "$(basename).ts"
+            "when": "$(basename).tsx"
+        },
+        "**/*.css": {
+            "when": "$(basename).scss"
+        },
+        "**/*.css.map": {
+            "when": "$(basename).scss"
         },
         "**/*.vsix": true,
-        "*.gitignore": true
-    }
+        ".sass-cache/**/*": true,
+        "dist/**/*": true,
+        "scripts/microsoft/**/*": true,
+        "scripts/uifabric/**/*": true
+    },
+    "vsicons.presets.angular": false
+}

@@ -1,5 +1,3 @@
-import VSS_Utils_Core = require("VSS/Utils/Core");
-import Q = require("q");
 import {Control, BaseControl} from "VSS/Controls";
 import Utils_String = require("VSS/Utils/String");
 import Utils_UI = require("VSS/Utils/UI");
@@ -8,9 +6,10 @@ import {StatusIndicator} from "VSS/Controls/StatusIndicator";
 import Dialogs = require("VSS/Controls/Dialogs");
 import {Combo} from "VSS/Controls/Combos";
 import * as WitContracts from "TFS/WorkItemTracking/Contracts";
-import {RelatedWitsControlOptions, RelatedFieldsControlOptions, Strings, IdentityReference, Constants, RelatedWitReference, AddLinkDialogResult} from "scripts/Models";
-import {WorkItemTypeColorHelper, StateColorHelper, IdentityHelper, fieldNameComparer} from "scripts/Helpers";
 import {IWorkItemFormService, WorkItemFormService} from "TFS/WorkItemTracking/Services";
+
+import {RelatedWitsControlOptions, RelatedFieldsControlOptions, Strings, IdentityReference, Constants, RelatedWitReference, AddLinkDialogResult} from "./Models";
+import {WorkItemTypeColorHelper, StateColorHelper, IdentityHelper, fieldNameComparer} from "./Helpers";
 
 export class RelatedWitsControl extends Control<RelatedWitsControlOptions> {   
     private _container: JQuery;
@@ -406,13 +405,9 @@ class AddLinkDialog extends Dialogs.ModalDialog {
         this.updateOkButton(true);
     }
 
-    private _getRelationTypes(): IPromise<WitContracts.WorkItemRelationType[]> {
-        var defer = Q.defer();
-        WorkItemFormService.getService()
-            .then((workItemFormService: IWorkItemFormService) => workItemFormService.getWorkItemRelationTypes())
-            .then((relationTypes: WitContracts.WorkItemRelationType[]) => defer.resolve(relationTypes));
-
-        return defer.promise;
+    private async _getRelationTypes(): Promise<WitContracts.WorkItemRelationType[]> {
+        let workItemFormService = await WorkItemFormService.getService();
+        return workItemFormService.getWorkItemRelationTypes();
     }
 
     public getDialogResult(): AddLinkDialogResult {
