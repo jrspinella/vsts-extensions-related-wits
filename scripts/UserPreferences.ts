@@ -10,10 +10,10 @@ export class UserPreferences {
         const dataService = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
         try {
             const model = await dataService.getValue<UserPreferenceModel>(`${Constants.StorageKey}_${workItemType}`, Constants.UserScope);
-            return model;
+            return model || {} as UserPreferenceModel;
         }
         catch (e) {
-            return null;
+            return {} as UserPreferenceModel;
         }
     }
 
