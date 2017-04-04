@@ -12,10 +12,7 @@
             "when": "$(basename).scss"
         },
         "**/*.vsix": true,
-        ".sass-cache/**/*": true,
-        "dist/**/*": true,
-        "scripts/microsoft/**/*": true,
-        "scripts/uifabric/**/*": true
+        "dist/**/*": true
     },
     "vsicons.presets.angular": false
 }

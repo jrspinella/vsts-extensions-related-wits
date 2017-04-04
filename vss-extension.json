@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "related-workitems",
-    "version": "1.1.1",
+    "version": "1.0.2",
     "name": "Related Work items",
     "description": "Gets a list of related work items for your current work item.",
     "publisher": "mohitbagra",
@@ -51,10 +51,6 @@
     "files": [
         {
             "path": "scripts",
-            "addressable": true
-        },
-        {
-            "path": "css",
             "addressable": true
         },
         {

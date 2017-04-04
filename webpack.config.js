@@ -22,10 +22,7 @@ module.exports = {
     ],
     resolve: {
         extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js"],
-        moduleExtensions: ["-loader"],
-        alias: { 
-            "OfficeFabric": path.resolve(__dirname, "node_modules/office-ui-fabric-react/lib-amd")
-        }        
+        moduleExtensions: ["-loader"]      
     },
     module: {
         loaders: [
@@ -51,7 +48,6 @@ module.exports = {
         new CopyWebpackPlugin([
             { from: "./node_modules/vss-web-extension-sdk/lib/VSS.SDK.min.js", to: "scripts/libs/VSS.SDK.min.js" },
             { from: "./node_modules/es6-promise/dist/es6-promise.min.js", to: "scripts/libs/es6-promise.min.js" },           
-            { from: "./node_modules/office-ui-fabric-react/dist/css/fabric.min.css", to: "css/libs/fabric.min.css" },
             { from: "./img", to: "img" },
             { from: "./index.html", to: "./" },
             { from: "./README.md", to: "README.md" },

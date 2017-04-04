@@ -4,8 +4,6 @@
     <meta charset="utf-8" />
     <script src="scripts/libs/es6-promise.min.js"></script>
     <script src="scripts/libs/VSS.SDK.min.js"></script>
-
-    <link rel="stylesheet" type="text/css" href="css/libs/fabric.min.css">
 </head>
 
 <body>
@@ -14,12 +12,7 @@
         VSS.init({
             explicitNotifyLoaded: true,
             usePlatformScripts: true,
-            moduleLoaderConfig: {
-                paths: {
-                    "OfficeFabric": "node_modules/office-ui-fabric-react/lib-amd",
-                    "@microsoft/load-themed-styles": "node_modules/office-ui-fabric-react/node_modules/@microsoft/load-themed-styles/lib-amd/index"
-                }
-            }
+            configureModuleLoader: true
         });
         
         // Load main entry point for extension

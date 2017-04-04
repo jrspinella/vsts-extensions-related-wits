@@ -4,7 +4,6 @@ typings
 *.vsix
 .vscode/*.db
 .vscode/*.db-wal
-.sass-cache
 css/*.css
 css/*.css.map
 npm-debug.log

@@ -6,11 +6,7 @@
         "target": "es5",
         "lib": ["dom", "es2015.promise", "es5"],
         "jsx": "react",
-        "experimentalDecorators": true,
-        "baseUrl": ".",
-        "paths": {
-            "OfficeFabric/*": ["node_modules/office-ui-fabric-react/lib-amd/*"]
-        }
+        "experimentalDecorators": true
     },
     "exclude": [
         "node_modules"
