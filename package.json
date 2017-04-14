@@ -8,9 +8,11 @@
   "scripts": {
     "clean": "rimraf dist *.vsix",
     "cleanall": "npm run clean && rimraf typings node_modules",
-    "dev": "webpack-dev-server --hot --progress --colors --content-base ./ --port 8888",
+    "dev": "webpack-dev-server -d --hot --progress --colors --content-base ./ --port 8888",
+    "devssl": "webpack-dev-server -d --hot --progress --colors --https --content-base ./ --port 8888",
     "build:release": "npm run clean && mkdir dist && webpack --display-error-details --progress --colors --output-path ./dist -p",
     "package:dev": "node ./configs/packageDev",
+    "package:devssl": "node ./configs/packageDevSSL",
     "package:release": "npm run build:release && node ./configs/packageRelease",    
     "postinstall": "typings install"
   },
@@ -19,7 +21,7 @@
     "@types/react-dom": "^0.14.23",
     "@types/jquery": "^2.0.41",
     "@types/q": "^1.0.0",
-    "webpack": "^2.3.1",
+    "webpack": "^2.3.3",
     "webpack-dev-server": "^2.4.2",
     "rimraf": "^2.6.1",
     "sass-loader": "^6.0.3",
@@ -27,14 +29,15 @@
     "css-loader": "^0.28.0",
     "ts-loader": "^2.0.3",
     "node-sass": "^4.5.2",
-    "tfx-cli": "^0.4.1",
+    "tfx-cli": "^0.4.5",
     "typescript": "^2.2.2",
     "typings": "^2.1.0",
-    "uglifyjs-webpack-plugin": "^0.4.0",
+    "uglifyjs-webpack-plugin": "^0.4.2",
     "copy-webpack-plugin": "^4.0.1"
   },
   "dependencies": {
     "vss-web-extension-sdk": "^2.114.0",
-    "es6-promise": "^4.1.0"
+    "es6-promise": "^4.1.0",
+    "office-ui-fabric-react": "^2.16.0"
   }
 }

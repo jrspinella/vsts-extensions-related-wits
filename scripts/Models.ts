@@ -75,8 +75,6 @@ export class Constants {
 }
 
 export class Strings {
-    public static LOADING_ICON = "big-status-progress";
-    public static Loading_Text = "Loading...";
     public static NoWorkItemsFound = "No related work items found";
     public static AddFieldPlaceholder = "Add field";
     public static SavePreferenceTitle = "Save look up field preferences for this work item type";

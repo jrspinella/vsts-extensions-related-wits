@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <script src="scripts/libs/es6-promise.min.js"></script>
     <script src="scripts/libs/VSS.SDK.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/libs/fabric.min.css">
 </head>
 
 <body>
@@ -12,7 +14,13 @@
         VSS.init({
             explicitNotifyLoaded: true,
             usePlatformScripts: true,
-            configureModuleLoader: true
+            usePlatformStyles: false,
+            moduleLoaderConfig: {
+                paths: {
+                    "OfficeFabric": "node_modules/office-ui-fabric-react/lib-amd",
+                    "@microsoft/load-themed-styles": "node_modules/office-ui-fabric-react/node_modules/@microsoft/load-themed-styles/lib-amd/index"
+                }
+            }
         });
         
         // Load main entry point for extension
@@ -23,10 +31,8 @@
         });
     </script>
 
-    <div class="ext-container">
-        <h3 class="new-workitem-message">Please save the workitem to get the related work items.</h3>
-        <div class="related-fields-container"></div>
-        <div class="related-wits-container"></div>        
+    <div id="ext-container">
+          
     </div>
 </body>
 </html>
