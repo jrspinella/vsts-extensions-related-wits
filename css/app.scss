@@ -1,13 +1,24 @@
-.ext-container {
-    display: flex;
-    flex-direction: column;
+#ext-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: auto;    
+    margin: 17px 20px;
+    margin-bottom: 0;
+
+    .fabric-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }    
 }
 
-.ui-dialog.add-link-dialog .relation-comment {
-    margin-top: 20px;
-}
-
-.ui-dialog.add-link-dialog .relation-comment-label,
-.ui-dialog.add-link-dialog .relation-type-label {
-    margin-bottom: 5px;
+.overflow-ellipsis {
+    text-overflow: ellipsis;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    word-wrap: normal;
 }
