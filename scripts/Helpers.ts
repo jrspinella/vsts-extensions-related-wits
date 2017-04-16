@@ -1,6 +1,10 @@
 import * as Utils_String from "VSS/Utils/String";
 import {IdentityReference} from "./Models";
 
+export function isInteger(value: string): boolean {
+    return /^\d+$/.test(value);
+}
+
 export class WorkItemTypeColorHelper {
     private static _workItemTypeColors: IDictionaryStringTo<string> = {
         "Bug": "#CC293D",

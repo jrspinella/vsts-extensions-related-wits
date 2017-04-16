@@ -4,13 +4,17 @@
 
     .settings-controls {
         display: flex;
-        
+
         .tagpicker-container {
             margin-left: 20px;
         }
 
+        .top {
+            margin-right: 20px;
+        }
+
         .sort-field-dropdown {
-            width: 200px;
+            width: 200px;            
         }
     }
 

@@ -12,21 +12,17 @@
 
         .title-cell {
             display: flex;
-            cursor: pointer;
-
-            &:hover {
-                color: #106ebe;
-                text-decoration: underline;
-            }
-
-            .work-item-type-color {
-                height: 18px;
-                width: 6px;
-                margin-right: 5px;
-            }
 
             .overflow-ellipsis {
-                flex: 1;
+                width: auto;
+                cursor: pointer;
+                border-left: 6px solid black;
+                padding-left: 5px;
+                
+                &:hover {
+                    color: #106ebe;
+                    text-decoration: underline;
+                }
             }
         }
 

@@ -14,6 +14,7 @@ export interface RelatedWitReference extends WitContracts.WorkItem {
 export interface UserPreferenceModel {
     fields: string[];
     sortByField: string;
+    top?: number;
 }
 
 export interface RelatedFieldsControlOptions {
@@ -34,6 +35,7 @@ export class Constants {
     public static UserScope = { scopeType: "User" };
 
     public static DEFAULT_SORT_BY_FIELD = "System.ChangedDate";
+    public static DEFAULT_RESULT_SIZE = 20;
 
     public static DEFAULT_FIELDS_TO_RETRIEVE = [
         "System.ID",
@@ -46,7 +48,6 @@ export class Constants {
     ];
 
     public static DEFAULT_FIELDS_TO_SEEK = [
-        "System.TeamProject",
         "System.WorkItemType",
         "System.Tags",
         "System.State",

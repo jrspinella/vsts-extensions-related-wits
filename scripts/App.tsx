@@ -3,7 +3,7 @@ import "../css/App.scss";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { IWorkItemNotificationListener, IWorkItemChangedArgs, IWorkItemFieldChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
+import { IWorkItemNotificationListener, IWorkItemChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
 import { WorkItem, WorkItemType, WorkItemStateColor, WorkItemReference, WorkItemFieldReference, Wiql, WorkItemQueryResult, WorkItemRelation } from "TFS/WorkItemTracking/Contracts";
 import * as WitClient from "TFS/WorkItemTracking/RestClient";
@@ -18,7 +18,6 @@ import { SearchBox } from "OfficeFabric/SearchBox";
 
 import { Loading } from "./Loading";
 import { MessagePanel, MessageType } from "./MessagePanel";
-import { InputError } from "./InputError";
 import { UserPreferenceModel, Constants } from "./Models";
 import { UserPreferences } from "./UserPreferences";
 import { WorkItemsViewer } from "./WorkItemsViewer";
@@ -95,7 +94,17 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
                                     this._updateFilterText("");
                                 }
                             }} />
-                        <CommandBar className="menu-bar" items={this._getMenuItems()} />
+
+                        <CommandBar 
+                            className="menu-bar" 
+                            items={this._getMenuItems()} 
+                            farItems={
+                                [
+                                    {
+                                        key: "resultCount", name: this.state.loading ? "" : `${this.state.items.length} results`, className: "result-count"
+                                    }
+                                ]
+                            } />
                     </div>
                     { 
                         this.state.settingsPanelOpen && 
@@ -262,7 +271,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
 
     private async _getWorkItems(fieldsToSeek: string[], sortByField: string): Promise<WorkItem[]> {
         let {project, wiql} = await this._createWiql(fieldsToSeek, sortByField);
-        let queryResults = await WitClient.getClient().queryByWiql({ query: wiql }, project, null, false, 20);
+        let queryResults = await WitClient.getClient().queryByWiql({ query: wiql }, project, null, false, this.state.settings.top);
         return this._readWorkItemsFromQueryResults(queryResults);
     }
 
@@ -322,36 +331,12 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
         };
     }
 
-    private async _readWorkItemsFromQueryResults(queryResults: WorkItemQueryResult): Promise<WorkItem[]> {
-        if (queryResults.workItems && queryResults.workItems.length > 0) {
-            var workItemIdMap: IDictionaryNumberTo<WorkItemReference> = {};
-            var workItemIds = $.map(queryResults.workItems, (elem: WorkItemReference) => {
-                return elem.id;
-            });
-            var fields = $.map(queryResults.columns, (elem: WorkItemFieldReference) => {
-                return elem.referenceName;
-            });
+    private async _readWorkItemsFromQueryResults(queryResult: WorkItemQueryResult): Promise<WorkItem[]> {
+        let workItemIds = queryResult.workItems.map(workItem => workItem.id);
+        let workItems: WorkItem[];
 
-            $.each(queryResults.workItems, (i:number, w: WorkItemReference) => {
-                workItemIdMap[w.id] = w;
-            })
-
-            let workItems = await WitClient.getClient().getWorkItems(workItemIds, fields);
-            // sort the workitems in the same order as they got retrieved from query
-            var sortedWorkItems = workItems.sort((w1: WorkItem, w2: WorkItem) => {
-                                        if (workItemIds.indexOf(w1.id) < workItemIds.indexOf(w2.id)) { return -1 }
-                                        if (workItemIds.indexOf(w1.id) > workItemIds.indexOf(w2.id)) { return 1 }
-                                        return 0;
-                                    });
-
-            let workItemFormService = await WorkItemFormService.getService();
-            let relations = await workItemFormService.getWorkItemRelations();
-            return $.map(sortedWorkItems, (w: WorkItem) => $.extend(w, { 
-                url: workItemIdMap[w.id].url,
-                isLinked: Utils_Array.arrayContains(w.url, relations, (url: string, relation: WorkItemRelation) => {
-                    return Utils_String.equals(relation.url, url, true);
-                })
-            }));
+        if (workItemIds.length > 0) {
+            return await WitClient.getClient().getWorkItems(workItemIds);
         }
         else {
             return [];

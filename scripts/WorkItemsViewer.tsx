@@ -191,17 +191,18 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                 text = `${item.id}`;
                 break;
             case "System.Title":
-                return (
-                    <div className="title-cell" title={item.fields[column.fieldName]} onClick={(e) => this._openWorkItemDialog(e, item)}>
-                        {
-                            this.props.workItemTypeColors && 
+                let witColor = this.props.workItemTypeColors && 
                             this.props.workItemTypeColors[item.fields["System.WorkItemType"]] && 
-                            this.props.workItemTypeColors[item.fields["System.WorkItemType"]].color && 
-                            <span 
-                                className="work-item-type-color" 
-                                style={{backgroundColor: "#" + this.props.workItemTypeColors[item.fields["System.WorkItemType"]].color}} />
-                        }
-                        <span className="overflow-ellipsis">{item.fields[column.fieldName]}</span>
+                            this.props.workItemTypeColors[item.fields["System.WorkItemType"]].color;
+                return (
+                    <div className="title-cell" title={item.fields[column.fieldName]}>
+                        <span 
+                            className="overflow-ellipsis" 
+                            onClick={(e) => this._openWorkItemDialog(e, item)}
+                            style={{borderColor: witColor ? "#" + witColor : "#000"}}>
+
+                            {item.fields[column.fieldName]}
+                        </span>
                     </div>
                 );
             case "System.State":
@@ -240,14 +241,7 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
 
 
     private _getContextMenuItems(): IContextualMenuItem[] {
-        return [
-            {
-                key: "Delete", name: "Delete", title: "Delete selected workitems", iconProps: {iconName: "Delete"}, 
-                disabled: this._selection.getSelectedCount() == 0,
-                onClick: (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
-                    
-                }
-            },
+        return [            
             {
                 key: "OpenQuery", name: "Open as query", title: "Open selected workitems as a query", iconProps: {iconName: "OpenInNewWindow"}, 
                 disabled: this._selection.getSelectedCount() == 0,
