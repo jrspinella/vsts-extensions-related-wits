@@ -5,7 +5,7 @@ import * as ReactDOM from "react-dom";
 
 import { IWorkItemNotificationListener, IWorkItemChangedArgs, IWorkItemFieldChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
-import { WorkItem, WorkItemQueryResult, WorkItemRelation } from "TFS/WorkItemTracking/Contracts";
+import { WorkItem, Wiql, WorkItemQueryResult, WorkItemRelation } from "TFS/WorkItemTracking/Contracts";
 import * as WitClient from "TFS/WorkItemTracking/RestClient";
 import Utils_String = require("VSS/Utils/String");
 import Utils_Array = require("VSS/Utils/Array");
@@ -14,25 +14,25 @@ import { autobind } from "OfficeFabric/Utilities";
 import { Fabric } from "OfficeFabric/Fabric";
 import { CommandBar } from "OfficeFabric/CommandBar";
 import { IContextualMenuItem } from "OfficeFabric/components/ContextualMenu/ContextualMenu.Props";
+import { SearchBox } from "OfficeFabric/SearchBox";
 
 import { Loading } from "./Loading";
 import { MessagePanel, MessageType } from "./MessagePanel";
 import { InputError } from "./InputError";
 import { UserPreferenceModel } from "./Models";
 import { UserPreferences } from "./UserPreferences";
+import { WorkItemsViewer, IListItem } from "./WorkItemsViewer";
 
 interface IRelatedWitsState {
     loading: boolean;
-    listItems: IListItem[];
+    items: IListItem[];
     isWorkItemLoaded?: boolean;
     isNew?: boolean;
     settings?: UserPreferenceModel;
     settingsPanelOpen?: boolean;
-}
-
-interface IListItem {
-    workItem: WorkItem;
-    isLinked: boolean;
+    filterText?: string;
+    sortColumn: string;
+    sortOrder: string;
 }
 
 export class RelatedWits extends React.Component<void, IRelatedWitsState> {
@@ -43,14 +43,14 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
         VSS.register(VSS.getContribution().id, {
             onLoaded: (args: IWorkItemLoadedArgs) => {
                 if (args.isNew) {
-                    this.setState({...this.state, isWorkItemLoaded: true, isNew: true});
+                    this._updateState({isWorkItemLoaded: true, isNew: true});
                 }
                 else {
                     this._refreshList();
                 }
             },
             onUnloaded: (args: IWorkItemChangedArgs) => {
-                this.setState({...this.state, isWorkItemLoaded: false, workItems: []});
+                this._updateState({isWorkItemLoaded: false, workItems: []});
             },
             onSaved: (args: IWorkItemChangedArgs) => {
                 this._refreshList();
@@ -65,7 +65,9 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
 
         this.state = {
             loading: true,
-            listItems: [],            
+            items: [],    
+            sortColumn: "System.CreatedDate",
+            sortOrder: "desc"        
         } as IRelatedWitsState;
     }
 
@@ -79,11 +81,29 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
         else {
             return (
                 <Fabric className="fabric-container">
-                    <CommandBar className="all-view-menu-toolbar" items={this._getMenuItems()} />
+                    <div className="results-view-menu">
+                        <SearchBox className="results-view-searchbox" 
+                            value={this.state.filterText || ""}
+                            onSearch={(searchText: string) => this._updateFilterText(searchText)} 
+                            onChange={(newText: string) => {
+                                if (newText.trim() === "") {
+                                    this._updateFilterText("");
+                                }
+                            }} />
+                        <CommandBar className="all-view-menu-toolbar" items={this._getMenuItems()} />
+                    </div>
                     {this._renderList()}
                 </Fabric>
             );
         }        
+    }
+
+    private _updateState(updatedStates: any) {
+        this.setState({...this.state, ...updatedStates});
+    }
+
+    private _updateFilterText(searchText: string): void {
+        this._updateState({filterText: searchText});
     }
 
     private _getMenuItems(): IContextualMenuItem[] {
@@ -95,39 +115,108 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
                 }
             },
             {
+                key: "OpenQuery", name: "Open as query", title: "Open all workitems as a query", iconProps: {iconName: "OpenInNewWindow"}, 
+                disabled: this.state.items.length === 0,
+                onClick: async (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
+                    let url = `${VSS.getWebContext().host.uri}/${VSS.getWebContext().project.id}/_workitems?_a=query&wiql=${encodeURIComponent(this._openQueryWiql())}`;
+                    window.open(url, "_parent");
+                }
+            },
+            {
                 key: "settings", name: "Settings", title: "Toggle settings panel", iconProps: {iconName: "Settings"}, 
                 disabled: this.state.settings == null, checked: this.state.settingsPanelOpen,
                 onClick: (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
-                    this.setState({...this.state, settingsPanelOpen: !(this.state.settingsPanelOpen)});
+                    this._updateState({settingsPanelOpen: !(this.state.settingsPanelOpen)});
                 }
             }
          ] as IContextualMenuItem[];
+    }
+
+    private _openQueryWiql(): string {
+        let ids = this.state.items.map((item: IListItem) => item.workItem.id).join(",");
+
+        return `SELECT [System.Id], [System.WorkItemType], [System.Title], [System.State], [System.AssignedTo], [System.AreaPath], [System.Tags]
+                 FROM WorkItems 
+                 WHERE [System.TeamProject] = @project 
+                 AND [System.ID] IN (${ids}) 
+                 ORDER BY [System.CreatedDate] DESC`;
     }
 
     private _renderList(): JSX.Element {
         if (this.state.loading) {
             return <Loading />;
         }        
-        else if (!this.state.listItems || this.state.listItems.length === 0) {
+        else if (!this.state.items || this.state.items.length === 0) {
             return <MessagePanel message="No related work items found." messageType={MessageType.Info} />;
         }
         else {
-            return null;
+            return <WorkItemsViewer 
+                        items={this._sortAndFilterWorkItems(this.state.items)} 
+                        sortColumn={this.state.sortColumn} 
+                        sortOrder={this.state.sortOrder} 
+                        changeSort={this._changeSort} />;
         }
     }
 
+    @autobind
+    private _sortAndFilterWorkItems(workItems: WorkItem[]): WorkItem[] {
+        let items = workItems.slice();
+        let sortedItems = items.sort((w1: WorkItem, w2: WorkItem) => {
+            if (Utils_String.equals(this.state.sortColumn, "ID", true)) {
+                return this.state.sortOrder === "desc" ? ((w1.id > w2.id) ? -1 : 1) : ((w1.id > w2.id) ? 1 : -1);
+            }
+            else if (Utils_String.equals(this.state.sortColumn, "System.CreatedDate", true)) {
+                let d1 = new Date(w1.fields["System.CreatedDate"]);
+                let d2 = new Date(w2.fields["System.CreatedDate"]);
+                return this.state.sortOrder === "desc" ? -1 * Utils_Date.defaultComparer(d1, d2) : Utils_Date.defaultComparer(d1, d2);
+            }
+            else if (Utils_String.equals(this.state.sortColumn, Constants.ACCEPT_STATUS_CELL_NAME, true)) {
+                let v1 = Helpers.isWorkItemAccepted(w1) ? Constants.ACCEPTED_TEXT : (Helpers.isWorkItemRejected(w1) ? Constants.REJECTED_TEXT : "");
+                let v2 = Helpers.isWorkItemAccepted(w2) ? Constants.ACCEPTED_TEXT : (Helpers.isWorkItemRejected(w2) ? Constants.REJECTED_TEXT : "");
+                return this.state.sortOrder === "desc" ? -1 * Utils_String.ignoreCaseComparer(v1, v2) : Utils_String.ignoreCaseComparer(v1, v2);
+            }
+            else {
+                let v1 = w1.fields[this.state.sortColumn];
+                let v2 = w2.fields[this.state.sortColumn];
+                return this.state.sortOrder === "desc" ? -1 * Utils_String.ignoreCaseComparer(v1, v2) : Utils_String.ignoreCaseComparer(v1, v2);
+            }
+        });
+
+        if (!this.state.filterText) {
+            return sortedItems;
+        }
+        else {
+            return sortedItems.filter((workItem: WorkItem) => {
+                let status = Helpers.isWorkItemAccepted(workItem) ? Constants.ACCEPTED_TEXT : (Helpers.isWorkItemRejected(workItem) ? Constants.REJECTED_TEXT : "");
+                const filterText = this.state.filterText;
+                return `${workItem.id}` === filterText
+                    || Utils_String.caseInsensitiveContains(workItem.fields["System.AssignedTo"] || "", filterText)
+                    || Utils_String.caseInsensitiveContains(workItem.fields["System.State"] || "", filterText)
+                    || Utils_String.caseInsensitiveContains(workItem.fields["System.CreatedBy"] || "", filterText)
+                    || Utils_String.caseInsensitiveContains(workItem.fields["System.Title"] || "", filterText)
+                    || Utils_String.caseInsensitiveContains(workItem.fields["System.AreaPath"] || "", filterText)
+                    || Utils_String.caseInsensitiveContains(status, filterText);
+            });
+        }
+    }
+    
+    @autobind
+    private _changeSort(sortColumn: string, sortOrder: string): void {
+        this._updateState({sortColumn: sortColumn, sortOrder: sortOrder});
+    }
+
     private async _refreshList(): Promise<void> {
-        this.setState({...this.state, isWorkItemLoaded: true, isNew: false, loading: true, listItems: []});
+        this._updateState({isWorkItemLoaded: true, isNew: false, loading: true, listItems: []});
 
         if (!this.state.settings) {
             const workItemFormService = await WorkItemFormService.getService();
             const workItemType = await workItemFormService.getFieldValue("System.WorkItemType") as string;
             let settings = await UserPreferences.readUserSetting(workItemType);
-            this.setState({...this.state, settings: settings});
+            this._updateState({settings: settings});
         }
 
 
-        this.setState({...this.state, loading: false, listItems: []});
+        this._updateState({loading: false, listItems: []});
     } 
 
     private async _getWorkItems(fieldsToSeek: string[], sortByField: string): Promise<IListItem[]> {

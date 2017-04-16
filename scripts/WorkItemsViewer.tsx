@@ -32,7 +32,7 @@ interface IWorkItemsViewerState  {
     contextMenuTarget?: MouseEvent;
 }
 
-interface IListItem {
+export interface IListItem {
     workItem: WorkItem;
     isLinked: boolean;    
 }
