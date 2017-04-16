@@ -71,10 +71,18 @@ export class Constants {
 
     public static ExcludedFields = [
         "System.AttachedFiles",
+        "System.AttachedFileCount",
+        "System.ExternalLinkCount",
+        "System.HyperLinkCount",
         "System.BISLinks",
         "System.LinkedFiles",
         "System.PersonId",
-        "System.RelatedLinks"
+        "System.RelatedLinks",
+        "System.RelatedLinkCount",
+        "System.TeamProject",
+        "System.Rev",
+        "System.Watermark",
+        "Microsoft.VSTS.Build.IntegrationBuild"
     ];
 }
 

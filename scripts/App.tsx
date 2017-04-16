@@ -40,8 +40,17 @@ interface IRelatedWitsState {
 export class RelatedWits extends React.Component<void, IRelatedWitsState> {
 
     constructor(props: void, context?: any) {
-        super(props, context);
+        super(props, context);        
 
+        this.state = {
+            loading: true,
+            items: [],    
+            sortColumn: "System.CreatedDate",
+            sortOrder: "desc"
+        } as IRelatedWitsState;
+    }
+
+    public componentDidMount() {
         VSS.register(VSS.getContribution().id, {
             onLoaded: (args: IWorkItemLoadedArgs) => {
                 if (args.isNew) {
@@ -64,13 +73,6 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
                 this._refreshList();
             },
         } as IWorkItemNotificationListener);
-
-        this.state = {
-            loading: true,
-            items: [],    
-            sortColumn: "System.CreatedDate",
-            sortOrder: "desc"
-        } as IRelatedWitsState;
     }
 
     public render(): JSX.Element {
@@ -95,7 +97,15 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
                             }} />
                         <CommandBar className="menu-bar" items={this._getMenuItems()} />
                     </div>
-                    { this.state.settingsPanelOpen && <SettingsPanel settings={this.state.settings} />}
+                    { 
+                        this.state.settingsPanelOpen && 
+                        <SettingsPanel 
+                            settings={this.state.settings} 
+                            onSave={(settings: UserPreferenceModel) => {
+                                this._updateState({settings: settings});
+                                this._refreshList();
+                            }} />
+                    }
                     {this._renderList()}
                 </Fabric>
             );
@@ -202,7 +212,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
     }
 
     private async _refreshList(): Promise<void> {
-        this._updateState({isWorkItemLoaded: true, isNew: false, loading: true, items: []});
+        this._updateState({isWorkItemLoaded: true, isNew: false, loading: true, items: [], sortColumn: "System.CreatedDate", sortOrder: "desc"});
 
         if (!this.state.settings) {
             await this._initializeSettings();
@@ -251,19 +261,20 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
     }
 
     private async _getWorkItems(fieldsToSeek: string[], sortByField: string): Promise<WorkItem[]> {
-        let data: string[] = await this._createWiql(fieldsToSeek, sortByField);
-        let queryResults = await WitClient.getClient().queryByWiql({ query: data[1] }, data[0], null, false, 20);
+        let {project, wiql} = await this._createWiql(fieldsToSeek, sortByField);
+        let queryResults = await WitClient.getClient().queryByWiql({ query: wiql }, project, null, false, 20);
         return this._readWorkItemsFromQueryResults(queryResults);
     }
 
-    private async _createWiql(fieldsToSeek: string[], sortByField: string): Promise<string[]> {
-        let fieldValuesToRead = fieldsToSeek.concat(["System.ID"]);
+    private async _createWiql(fieldsToSeek: string[], sortByField: string): Promise<{project: string, wiql: string}> {
         let workItemFormService = await WorkItemFormService.getService();
-        let fieldValues = await workItemFormService.getFieldValues(fieldValuesToRead);
-        let witId = fieldValues["System.ID"]; 
+        let fieldValues = await workItemFormService.getFieldValues(fieldsToSeek, true);
+        let witId = await workItemFormService.getId();
+        let project = await workItemFormService.getFieldValue("System.TeamProject") as string;
+       
         // Generate fields to retrieve part
         let fieldsToRetrieveString: string = "";
-        $.each(Constants.DEFAULT_FIELDS_TO_RETRIEVE, (i: number, fieldRefName: string) => {
+        Constants.DEFAULT_FIELDS_TO_RETRIEVE.forEach((fieldRefName: string) => {
             fieldsToRetrieveString = `${fieldsToRetrieveString}[${fieldRefName}],`
         });
         // remove last comma
@@ -271,7 +282,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
 
         // Generate fields to seek part
         let fieldsToSeekString: string = "";
-        $.each(fieldsToSeek, (i: number, fieldRefName: string) => {
+        fieldsToSeek.forEach((fieldRefName: string) => {
             let fieldValue = fieldValues[fieldRefName];
             if (Utils_String.equals(fieldRefName, "System.Tags", true) && fieldValue) {
                 fieldsToSeekString = fieldsToSeekString + " (";
@@ -284,7 +295,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
                     fieldsToSeekString = fieldsToSeekString.substring(0, fieldsToSeekString.length - 3) + ") AND";
                 }
             }
-            else if (!Utils_String.equals(fieldRefName, "System.TeamProject", true)) {
+            else if (Constants.ExcludedFields.indexOf(fieldRefName) === -1) {
                 if (Utils_String.equals(typeof(fieldValue), "string", true) && fieldValue) {
                     fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] = '${fieldValue}' AND`
                 }
@@ -301,9 +312,14 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
             fieldsToSeekString = fieldsToSeekString.substring(0, fieldsToSeekString.length - 4);
         }
         let fieldsToSeekPredicate = fieldsToSeekString ? `AND ${fieldsToSeekString}` : "";
-        let wiql = `SELECT ${fieldsToRetrieveString} FROM workitems where [System.TeamProject] = @project AND [System.ID] <> ${witId} ${fieldsToSeekPredicate} order by [${sortByField}] desc`;
+        let wiql = `SELECT ${fieldsToRetrieveString} FROM workitems 
+                    where [System.TeamProject] = '${project}' AND [System.ID] <> ${witId} 
+                    ${fieldsToSeekPredicate} order by [${sortByField}] desc`;
 
-        return [fieldValues["System.TeamProject"] as string, wiql];
+        return {
+            project: project,
+            wiql: wiql
+        };
     }
 
     private async _readWorkItemsFromQueryResults(queryResults: WorkItemQueryResult): Promise<WorkItem[]> {
