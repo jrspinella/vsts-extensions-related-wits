@@ -1,17 +1,44 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
 #ext-container {
+    overflow: hidden;
+    margin: 10px 0 0 10px;
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    overflow: auto;    
-    margin: 17px 20px;
-    margin-bottom: 0;
 
     .fabric-container {
         display: flex;
         flex-direction: column;
         height: 100%;
+
+        & > .message-panel {
+            margin-top: 10px;
+        }
+        
+        .menu-container {
+            display: flex;
+            flex-direction: row;            
+
+            .searchbox {
+                margin-bottom: 1px;
+                margin-top: 1px;
+            }
+            
+            .menu-bar {
+                flex: 1;
+            }
+        }
+
+        .workitem-list-container {
+            margin-top: 10px;
+            flex: 1;
+        }        
     }    
 }
 

@@ -1,4 +1,4 @@
-import "../css/settingsPanel.scss";
+import "../css/WorkItemsViewer.scss";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -21,20 +21,16 @@ import { WorkItem } from "TFS/WorkItemTracking/Contracts";
 import { IdentityView } from "./IdentityView";
 
 interface IWorkItemsViewerProps {
-    items: IListItem[];
+    items: WorkItem[];
     sortColumn: string;
     sortOrder: string;
+    workItemTypeColors?: IDictionaryStringTo<{color: string, stateColors: IDictionaryStringTo<string>}>;
     changeSort: (sortColumn: string, sortOrder: string) => void;
 }
 
 interface IWorkItemsViewerState  {
     isContextMenuVisible?: boolean;
     contextMenuTarget?: MouseEvent;
-}
-
-export interface IListItem {
-    workItem: WorkItem;
-    isLinked: boolean;    
 }
 
 export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWorkItemsViewerState> {
@@ -50,13 +46,9 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
         };
     }
 
-    public componentWillReceiveProps(nextProps: IWorkItemsViewerProps) {
-        
-    }
-
     public render(): JSX.Element {
         return (
-            <div className="results-view-contents">
+            <div className="workitem-list-container">
                 <DetailsList 
                     layoutMode={DetailsListLayoutMode.justified}
                     constrainMode={ConstrainMode.horizontalConstrained}
@@ -199,11 +191,37 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                 text = `${item.id}`;
                 break;
             case "System.Title":
-                return <span className="title-cell overflow-ellipsis" onClick={(e) => this._openWorkItemDialog(e, item)} title={item.fields[column.fieldName]}>{item.fields[column.fieldName]}</span>
-            case "System.CreatedDate":
-                text = Utils_Date.friendly(new Date(item.fields["System.CreatedDate"]));
-                break;
-            case "System.CreatedBy":
+                return (
+                    <div className="title-cell" title={item.fields[column.fieldName]} onClick={(e) => this._openWorkItemDialog(e, item)}>
+                        {
+                            this.props.workItemTypeColors && 
+                            this.props.workItemTypeColors[item.fields["System.WorkItemType"]] && 
+                            this.props.workItemTypeColors[item.fields["System.WorkItemType"]].color && 
+                            <span 
+                                className="work-item-type-color" 
+                                style={{backgroundColor: "#" + this.props.workItemTypeColors[item.fields["System.WorkItemType"]].color}} />
+                        }
+                        <span className="overflow-ellipsis">{item.fields[column.fieldName]}</span>
+                    </div>
+                );
+            case "System.State":
+                return (
+                    <div className="state-cell" title={item.fields[column.fieldName]}>
+                        {
+                            this.props.workItemTypeColors &&
+                            this.props.workItemTypeColors[item.fields["System.WorkItemType"]] &&
+                            this.props.workItemTypeColors[item.fields["System.WorkItemType"]].stateColors &&
+                            this.props.workItemTypeColors[item.fields["System.WorkItemType"]].stateColors[item.fields["System.State"]] &&
+                            <span 
+                                className="work-item-type-state-color" 
+                                style={{
+                                    backgroundColor: "#" + this.props.workItemTypeColors[item.fields["System.WorkItemType"]].stateColors[item.fields["System.State"]],
+                                    borderColor: "#" + this.props.workItemTypeColors[item.fields["System.WorkItemType"]].stateColors[item.fields["System.State"]]
+                                }} />
+                        }
+                        <span className="overflow-ellipsis">{item.fields[column.fieldName]}</span>
+                    </div>
+                );
             case "System.AssignedTo":
                 return <IdentityView identityDistinctName={item.fields[column.fieldName]} />;
             case "Actions":                
@@ -235,7 +253,7 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                 disabled: this._selection.getSelectedCount() == 0,
                 onClick: (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
                     let url = `${VSS.getWebContext().host.uri}/${VSS.getWebContext().project.id}/_workitems?_a=query&wiql=${encodeURIComponent(this._getSelectedWorkItemsWiql())}`;
-                    window.open(url, "_parent");
+                    window.open(url, "_blank");
                 }
             }
         ];
@@ -245,7 +263,7 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
         let selectedWorkItems = this._selection.getSelection() as WorkItem[];
         let ids = selectedWorkItems.map((w:WorkItem) => w.id).join(",");
 
-        return `SELECT [System.Id], [System.Title], [System.CreatedBy], [System.CreatedDate], [System.State], [System.AssignedTo], [System.AreaPath]
+        return `SELECT [System.Id], [System.Title], [System.State], [System.AssignedTo], [System.AreaPath], [System.Tags]
                  FROM WorkItems 
                  WHERE [System.TeamProject] = @project 
                  AND [System.ID] IN (${ids}) 

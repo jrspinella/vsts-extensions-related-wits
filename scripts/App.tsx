@@ -1,11 +1,11 @@
-import "../css/app.scss";
+import "../css/App.scss";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { IWorkItemNotificationListener, IWorkItemChangedArgs, IWorkItemFieldChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
-import { WorkItem, Wiql, WorkItemQueryResult, WorkItemRelation } from "TFS/WorkItemTracking/Contracts";
+import { WorkItem, WorkItemType, WorkItemStateColor, WorkItemReference, WorkItemFieldReference, Wiql, WorkItemQueryResult, WorkItemRelation } from "TFS/WorkItemTracking/Contracts";
 import * as WitClient from "TFS/WorkItemTracking/RestClient";
 import Utils_String = require("VSS/Utils/String");
 import Utils_Array = require("VSS/Utils/Array");
@@ -19,16 +19,18 @@ import { SearchBox } from "OfficeFabric/SearchBox";
 import { Loading } from "./Loading";
 import { MessagePanel, MessageType } from "./MessagePanel";
 import { InputError } from "./InputError";
-import { UserPreferenceModel } from "./Models";
+import { UserPreferenceModel, Constants } from "./Models";
 import { UserPreferences } from "./UserPreferences";
-import { WorkItemsViewer, IListItem } from "./WorkItemsViewer";
+import { WorkItemsViewer } from "./WorkItemsViewer";
+import { SettingsPanel } from "./SettingsPanel";
 
 interface IRelatedWitsState {
     loading: boolean;
-    items: IListItem[];
+    items: WorkItem[];
     isWorkItemLoaded?: boolean;
     isNew?: boolean;
     settings?: UserPreferenceModel;
+    workItemTypeColors?: IDictionaryStringTo<{color: string, stateColors: IDictionaryStringTo<string>}>;
     settingsPanelOpen?: boolean;
     filterText?: string;
     sortColumn: string;
@@ -67,7 +69,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
             loading: true,
             items: [],    
             sortColumn: "System.CreatedDate",
-            sortOrder: "desc"        
+            sortOrder: "desc"
         } as IRelatedWitsState;
     }
 
@@ -81,8 +83,9 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
         else {
             return (
                 <Fabric className="fabric-container">
-                    <div className="results-view-menu">
-                        <SearchBox className="results-view-searchbox" 
+                    <div className="menu-container">
+                        <SearchBox 
+                            className="searchbox" 
                             value={this.state.filterText || ""}
                             onSearch={(searchText: string) => this._updateFilterText(searchText)} 
                             onChange={(newText: string) => {
@@ -90,8 +93,9 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
                                     this._updateFilterText("");
                                 }
                             }} />
-                        <CommandBar className="all-view-menu-toolbar" items={this._getMenuItems()} />
+                        <CommandBar className="menu-bar" items={this._getMenuItems()} />
                     </div>
+                    { this.state.settingsPanelOpen && <SettingsPanel settings={this.state.settings} />}
                     {this._renderList()}
                 </Fabric>
             );
@@ -119,12 +123,13 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
                 disabled: this.state.items.length === 0,
                 onClick: async (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
                     let url = `${VSS.getWebContext().host.uri}/${VSS.getWebContext().project.id}/_workitems?_a=query&wiql=${encodeURIComponent(this._openQueryWiql())}`;
-                    window.open(url, "_parent");
+                    window.open(url, "_blank");
                 }
             },
             {
                 key: "settings", name: "Settings", title: "Toggle settings panel", iconProps: {iconName: "Settings"}, 
-                disabled: this.state.settings == null, checked: this.state.settingsPanelOpen,
+                style: this.state.settingsPanelOpen ? {backgroundColor: "#EAEAEA"} : null,
+                disabled: this.state.settings == null,
                 onClick: (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
                     this._updateState({settingsPanelOpen: !(this.state.settingsPanelOpen)});
                 }
@@ -133,9 +138,9 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
     }
 
     private _openQueryWiql(): string {
-        let ids = this.state.items.map((item: IListItem) => item.workItem.id).join(",");
+        let ids = this.state.items.map((workItem: WorkItem) => workItem.id).join(",");
 
-        return `SELECT [System.Id], [System.WorkItemType], [System.Title], [System.State], [System.AssignedTo], [System.AreaPath], [System.Tags]
+        return `SELECT [System.Id], [System.Title], [System.State], [System.AssignedTo], [System.AreaPath], [System.Tags]
                  FROM WorkItems 
                  WHERE [System.TeamProject] = @project 
                  AND [System.ID] IN (${ids}) 
@@ -145,15 +150,18 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
     private _renderList(): JSX.Element {
         if (this.state.loading) {
             return <Loading />;
-        }        
-        else if (!this.state.items || this.state.items.length === 0) {
+        }
+        const filteredItems = this._sortAndFilterWorkItems(this.state.items);
+
+        if (filteredItems.length === 0) {
             return <MessagePanel message="No related work items found." messageType={MessageType.Info} />;
         }
         else {
             return <WorkItemsViewer 
-                        items={this._sortAndFilterWorkItems(this.state.items)} 
+                        items={filteredItems} 
                         sortColumn={this.state.sortColumn} 
                         sortOrder={this.state.sortOrder} 
+                        workItemTypeColors={this.state.workItemTypeColors}
                         changeSort={this._changeSort} />;
         }
     }
@@ -164,17 +172,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
         let sortedItems = items.sort((w1: WorkItem, w2: WorkItem) => {
             if (Utils_String.equals(this.state.sortColumn, "ID", true)) {
                 return this.state.sortOrder === "desc" ? ((w1.id > w2.id) ? -1 : 1) : ((w1.id > w2.id) ? 1 : -1);
-            }
-            else if (Utils_String.equals(this.state.sortColumn, "System.CreatedDate", true)) {
-                let d1 = new Date(w1.fields["System.CreatedDate"]);
-                let d2 = new Date(w2.fields["System.CreatedDate"]);
-                return this.state.sortOrder === "desc" ? -1 * Utils_Date.defaultComparer(d1, d2) : Utils_Date.defaultComparer(d1, d2);
-            }
-            else if (Utils_String.equals(this.state.sortColumn, Constants.ACCEPT_STATUS_CELL_NAME, true)) {
-                let v1 = Helpers.isWorkItemAccepted(w1) ? Constants.ACCEPTED_TEXT : (Helpers.isWorkItemRejected(w1) ? Constants.REJECTED_TEXT : "");
-                let v2 = Helpers.isWorkItemAccepted(w2) ? Constants.ACCEPTED_TEXT : (Helpers.isWorkItemRejected(w2) ? Constants.REJECTED_TEXT : "");
-                return this.state.sortOrder === "desc" ? -1 * Utils_String.ignoreCaseComparer(v1, v2) : Utils_String.ignoreCaseComparer(v1, v2);
-            }
+            }            
             else {
                 let v1 = w1.fields[this.state.sortColumn];
                 let v2 = w2.fields[this.state.sortColumn];
@@ -187,15 +185,13 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
         }
         else {
             return sortedItems.filter((workItem: WorkItem) => {
-                let status = Helpers.isWorkItemAccepted(workItem) ? Constants.ACCEPTED_TEXT : (Helpers.isWorkItemRejected(workItem) ? Constants.REJECTED_TEXT : "");
                 const filterText = this.state.filterText;
                 return `${workItem.id}` === filterText
                     || Utils_String.caseInsensitiveContains(workItem.fields["System.AssignedTo"] || "", filterText)
                     || Utils_String.caseInsensitiveContains(workItem.fields["System.State"] || "", filterText)
-                    || Utils_String.caseInsensitiveContains(workItem.fields["System.CreatedBy"] || "", filterText)
                     || Utils_String.caseInsensitiveContains(workItem.fields["System.Title"] || "", filterText)
                     || Utils_String.caseInsensitiveContains(workItem.fields["System.AreaPath"] || "", filterText)
-                    || Utils_String.caseInsensitiveContains(status, filterText);
+                    || Utils_String.caseInsensitiveContains(workItem.fields["System.Tags"] || "", filterText);                    
             });
         }
     }
@@ -206,20 +202,55 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
     }
 
     private async _refreshList(): Promise<void> {
-        this._updateState({isWorkItemLoaded: true, isNew: false, loading: true, listItems: []});
+        this._updateState({isWorkItemLoaded: true, isNew: false, loading: true, items: []});
 
         if (!this.state.settings) {
-            const workItemFormService = await WorkItemFormService.getService();
-            const workItemType = await workItemFormService.getFieldValue("System.WorkItemType") as string;
-            let settings = await UserPreferences.readUserSetting(workItemType);
-            this._updateState({settings: settings});
+            await this._initializeSettings();
         }
 
+        const items = await this._getWorkItems(this.state.settings.fields, this.state.settings.sortByField);
+        this._updateState({loading: false, items: items});
 
-        this._updateState({loading: false, listItems: []});
-    } 
+        if (!this.state.workItemTypeColors) {
+            this._initializeWorkItemTypeColors();
+        }
+    }
 
-    private async _getWorkItems(fieldsToSeek: string[], sortByField: string): Promise<IListItem[]> {
+    private async _initializeSettings() {
+        const workItemFormService = await WorkItemFormService.getService();
+        const workItemType = await workItemFormService.getFieldValue("System.WorkItemType") as string;
+        const project = await workItemFormService.getFieldValue("System.TeamProject") as string;
+        const settings = await UserPreferences.readUserSetting(workItemType);
+
+        this._updateState({settings: settings});
+    }
+
+    private async _initializeWorkItemTypeColors() {
+        const workItemFormService = await WorkItemFormService.getService();
+        const workItemType = await workItemFormService.getFieldValue("System.WorkItemType") as string;
+        const project = await workItemFormService.getFieldValue("System.TeamProject") as string;
+        let workItemTypeColors: IDictionaryStringTo<{color: string, stateColors: IDictionaryStringTo<string>}> = {};
+
+        const workItemTypes = await WitClient.getClient().getWorkItemTypes(project);
+        workItemTypes.forEach((wit: WorkItemType) => workItemTypeColors[wit.name] = {
+            color: wit.color,
+            stateColors: {}
+        });
+
+        try {
+            await Promise.all(workItemTypes.map(async (wit: WorkItemType) => {
+                let stateColors = await WitClient.getClient().getWorkItemTypeStates(project, wit.name);
+                stateColors.forEach((stateColor: WorkItemStateColor) => workItemTypeColors[wit.name].stateColors[stateColor.name] = stateColor.color);
+            }));
+        }
+        catch (e) {
+
+        }
+        
+        this._updateState({workItemTypeColors: workItemTypeColors});
+    }
+
+    private async _getWorkItems(fieldsToSeek: string[], sortByField: string): Promise<WorkItem[]> {
         let data: string[] = await this._createWiql(fieldsToSeek, sortByField);
         let queryResults = await WitClient.getClient().queryByWiql({ query: data[1] }, data[0], null, false, 20);
         return this._readWorkItemsFromQueryResults(queryResults);
@@ -227,7 +258,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
 
     private async _createWiql(fieldsToSeek: string[], sortByField: string): Promise<string[]> {
         let fieldValuesToRead = fieldsToSeek.concat(["System.ID"]);
-        let workItemFormService = await this._ensureWorkItemFormService()
+        let workItemFormService = await WorkItemFormService.getService();
         let fieldValues = await workItemFormService.getFieldValues(fieldValuesToRead);
         let witId = fieldValues["System.ID"]; 
         // Generate fields to retrieve part
@@ -275,8 +306,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
         return [fieldValues["System.TeamProject"] as string, wiql];
     }
 
-
-    private async _readWorkItemsFromQueryResults(queryResults: WorkItemQueryResult): Promise<IListItem[]> {
+    private async _readWorkItemsFromQueryResults(queryResults: WorkItemQueryResult): Promise<WorkItem[]> {
         if (queryResults.workItems && queryResults.workItems.length > 0) {
             var workItemIdMap: IDictionaryNumberTo<WorkItemReference> = {};
             var workItemIds = $.map(queryResults.workItems, (elem: WorkItemReference) => {

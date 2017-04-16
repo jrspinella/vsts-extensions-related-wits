@@ -33,14 +33,18 @@ export class Constants {
     public static StorageKey = "RelatedWorkItemsFields";
     public static UserScope = { scopeType: "User" };
 
+    public static DEFAULT_SORT_BY_FIELD = "System.ChangedDate";
+
     public static DEFAULT_FIELDS_TO_RETRIEVE = [
         "System.ID",
         "System.WorkItemType",
         "System.Title",
         "System.AssignedTo",
+        "System.AreaPath",
         "System.State",
         "System.Tags"
     ];
+
     public static DEFAULT_FIELDS_TO_SEEK = [
         "System.TeamProject",
         "System.WorkItemType",

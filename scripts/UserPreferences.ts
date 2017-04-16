@@ -10,10 +10,16 @@ export class UserPreferences {
         const dataService = await VSS.getService<IExtensionDataService>(VSS.ServiceIds.ExtensionData);
         try {
             const model = await dataService.getValue<UserPreferenceModel>(`${Constants.StorageKey}_${workItemType}`, Constants.UserScope);
-            return model || {} as UserPreferenceModel;
+            return model || {
+                fields: Constants.DEFAULT_FIELDS_TO_SEEK,
+                sortByField: Constants.DEFAULT_SORT_BY_FIELD
+            };
         }
         catch (e) {
-            return {} as UserPreferenceModel;
+            return {
+                fields: Constants.DEFAULT_FIELDS_TO_SEEK,
+                sortByField: Constants.DEFAULT_SORT_BY_FIELD
+            };
         }
     }
 
