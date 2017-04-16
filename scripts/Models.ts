@@ -69,7 +69,7 @@ export class Constants {
         WitContracts.FieldType.TreePath
     ];
 
-    public static ExcludedSortableFields = [
+    public static ExcludedFields = [
         "System.AttachedFiles",
         "System.BISLinks",
         "System.LinkedFiles",

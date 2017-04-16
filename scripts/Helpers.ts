@@ -1,15 +1,6 @@
 import * as Utils_String from "VSS/Utils/String";
 import {IdentityReference} from "./Models";
 
-export function fieldNameComparer(a: string, b: string): number {
-    let aUpper = a.toUpperCase();
-    let bUpper = b.toUpperCase();
-
-    if (aUpper < bUpper) { return -1 }
-    if (aUpper > bUpper) { return 1 }
-    return 0;
-}
-
 export class WorkItemTypeColorHelper {
     private static _workItemTypeColors: IDictionaryStringTo<string> = {
         "Bug": "#CC293D",
