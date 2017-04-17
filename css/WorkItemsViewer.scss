@@ -43,5 +43,13 @@
                 flex: 1;
             }
         }
+
+        .link-cell {
+            height: 16px;
+
+            .workitem-link-button {
+                height: 16px;
+            }
+        }
     }
 }

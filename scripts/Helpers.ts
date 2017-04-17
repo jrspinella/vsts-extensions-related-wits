@@ -1,56 +1,7 @@
 import * as Utils_String from "VSS/Utils/String";
-import {IdentityReference} from "./Models";
 
 export function isInteger(value: string): boolean {
     return /^\d+$/.test(value);
-}
-
-export class WorkItemTypeColorHelper {
-    private static _workItemTypeColors: IDictionaryStringTo<string> = {
-        "Bug": "#CC293D",
-        "Task": "#F2CB1D",
-        "Requirement": "#009CCC",
-        "Feature": "#773B93",
-        "Epic": "#FF7B00",
-        "User Story": "#009CCC",
-        "Product Backlog Item": "#009CCC"
-    };
-
-    public static parseColor(type: string): string {
-        if (WorkItemTypeColorHelper._workItemTypeColors[type]) {
-            return WorkItemTypeColorHelper._workItemTypeColors[type];
-        }
-        else {
-            return "#FF9D00";
-        }
-    }
-}
-
-export class StateColorHelper {
-    private static _stateColors: IDictionaryStringTo<string> = {
-        "New": "#B2B2B2",
-        "Active": "#007acc",
-        "Resolved": "#ff9d00",
-        "Closed": "#339933",
-        "Requested": "#b2b2b2",
-        "Accepted": "#007acc",
-        "Removed": "#ffffff",
-        "Ready": "#007acc",
-        "Design": "#b2b2b2",
-        "Inactive": "#339933",
-        "In Planning": "#007acc",
-        "In Progress": "#007acc",
-        "Completed": "#339933"
-    };
-
-    public static parseColor(state: string): string {
-        if (StateColorHelper._stateColors[state]) {
-            return StateColorHelper._stateColors[state];
-        }
-        else {
-            return "#007acc";
-        }
-    }
 }
 
 /**

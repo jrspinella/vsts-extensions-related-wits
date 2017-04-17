@@ -114,8 +114,8 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                 fieldName: "Actions",
                 key: "Actions",
                 name: "",
-                minWidth: 40,
-                maxWidth: 40,
+                minWidth: 30,
+                maxWidth: 30,
                 isResizable: false,
                 isSorted: false,
                 isSortedDescending: false
@@ -227,7 +227,7 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                 return <IdentityView identityDistinctName={item.fields[column.fieldName]} />;
             case "Actions":                
                 return (
-                    <div className="workitem-row-actions-cell">
+                    <div className="link-cell">
                         <IconButton icon="Link" className="workitem-link-button" title="Add a link" />                        
                     </div>
                 );

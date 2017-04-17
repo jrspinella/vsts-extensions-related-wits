@@ -86,26 +86,3 @@ export class Constants {
         "Microsoft.VSTS.Build.IntegrationBuild"
     ];
 }
-
-export class Strings {
-    public static NoWorkItemsFound = "No related work items found";
-    public static AddFieldPlaceholder = "Add field";
-    public static SavePreferenceTitle = "Save look up field preferences for this work item type";
-    public static RefreshList = "Refresh the work item list";
-    public static RemoveItemTitle = "Remove field";
-    public static NeedAtleastOneField = "At least one look up field should be specified";
-    public static SortBy = "Sort By :";
-    public static AddLink = "Link to this workitem";
-    public static AddLinkDialogTitle = "Add link to this workitem";
-    public static AddLinkDialogOkText = "Add Link";
-    public static AddLinkTitle = "Link added by Related workitems extension";
-    public static LinkTypeLabel = "Link type";
-    public static LinkCommentLabel = "Comment";
-}
-
-export interface IdentityReference {
-    id?: string;
-    displayName: string;
-    uniqueName?: string;
-    isIdentity?: boolean;
-}

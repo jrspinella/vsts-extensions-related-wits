@@ -221,14 +221,14 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
     }
 
     private async _refreshList(): Promise<void> {
-        this._updateState({isWorkItemLoaded: true, isNew: false, loading: true, items: [], sortColumn: "System.CreatedDate", sortOrder: "desc"});
+        this._updateState({isWorkItemLoaded: true, isNew: false, loading: true, items: []});
 
         if (!this.state.settings) {
             await this._initializeSettings();
         }
 
         const items = await this._getWorkItems(this.state.settings.fields, this.state.settings.sortByField);
-        this._updateState({loading: false, items: items});
+        this._updateState({loading: false, items: items, sortColumn: (this.state.settings && this.state.settings.sortByField) || Constants.DEFAULT_SORT_BY_FIELD, sortOrder: "desc"});
 
         if (!this.state.workItemTypeColors) {
             this._initializeWorkItemTypeColors();
