@@ -12,11 +12,9 @@ import { autobind } from "OfficeFabric/Utilities";
 import { IContextualMenuItem } from "OfficeFabric/components/ContextualMenu/ContextualMenu.Props";
 import { ContextualMenu } from "OfficeFabric/ContextualMenu";
 
-import Utils_Date = require("VSS/Utils/Date");
 import Utils_String = require("VSS/Utils/String");
-import Utils_Array = require("VSS/Utils/Array");
-import { WorkItemFormNavigationService } from "TFS/WorkItemTracking/Services";
-import { WorkItem } from "TFS/WorkItemTracking/Contracts";
+import { WorkItemFormNavigationService, WorkItemFormService } from "TFS/WorkItemTracking/Services";
+import { WorkItem, WorkItemRelationType, WorkItemRelation } from "TFS/WorkItemTracking/Contracts";
 
 import { IdentityView } from "./IdentityView";
 
@@ -25,7 +23,9 @@ interface IWorkItemsViewerProps {
     sortColumn: string;
     sortOrder: string;
     workItemTypeColors?: IDictionaryStringTo<{color: string, stateColors: IDictionaryStringTo<string>}>;
+    relationsMap: IDictionaryStringTo<boolean>;
     changeSort: (sortColumn: string, sortOrder: string) => void;
+    relationTypes: WorkItemRelationType[];
 }
 
 interface IWorkItemsViewerState  {
@@ -114,8 +114,8 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                 fieldName: "Actions",
                 key: "Actions",
                 name: "",
-                minWidth: 30,
-                maxWidth: 30,
+                minWidth: 50,
+                maxWidth: 50,
                 isResizable: false,
                 isSorted: false,
                 isSortedDescending: false
@@ -225,12 +225,42 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                 );
             case "System.AssignedTo":
                 return <IdentityView identityDistinctName={item.fields[column.fieldName]} />;
-            case "Actions":                
-                return (
-                    <div className="link-cell">
-                        <IconButton icon="Link" className="workitem-link-button" title="Add a link" />                        
-                    </div>
-                );
+            case "Actions":
+                let isLinked: boolean = false;
+                if (this.props.relationsMap && this.props.relationTypes && !this.props.relationsMap[item.url]) {
+                    return (
+                        <div className="link-cell">
+                            <IconButton 
+                                icon="Link"
+                                className="workitem-link-button"
+                                title="Add link"
+                                menuProps={{
+                                    className: "callout-container",
+                                    items: this.props.relationTypes.filter(r => r.name != null && r.name.trim() !== "").map(relationType => {
+                                        return {
+                                            key: relationType.referenceName,
+                                            name: relationType.name,
+                                            onClick: async (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
+                                                const workItemFormService = await WorkItemFormService.getService();
+                                                let workItemRelation = {
+                                                    rel: relationType.referenceName,
+                                                    attributes: {
+                                                        isLocked: false
+                                                    },
+                                                    url: item.url
+                                                };
+                                                workItemFormService.addWorkItemRelations([workItemRelation]);
+                                            }
+                                        };
+                                    })                                    
+                                }}
+                            />
+                        </div>
+                    );
+                }
+                else {
+                    return null;
+                }                
             default:
                 text = item.fields[column.fieldName];  
                 break;          
@@ -238,7 +268,6 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
 
         return <div className="overflow-ellipsis" title={text}>{text}</div>;
     }    
-
 
     private _getContextMenuItems(): IContextualMenuItem[] {
         return [            

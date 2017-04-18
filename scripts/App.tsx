@@ -5,10 +5,9 @@ import * as ReactDOM from "react-dom";
 
 import { IWorkItemNotificationListener, IWorkItemChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
-import { WorkItem, WorkItemType, WorkItemStateColor, WorkItemReference, WorkItemFieldReference, Wiql, WorkItemQueryResult, WorkItemRelation } from "TFS/WorkItemTracking/Contracts";
+import { WorkItem, WorkItemType, WorkItemStateColor, Wiql, WorkItemQueryResult, WorkItemRelation, WorkItemRelationType } from "TFS/WorkItemTracking/Contracts";
 import * as WitClient from "TFS/WorkItemTracking/RestClient";
 import Utils_String = require("VSS/Utils/String");
-import Utils_Array = require("VSS/Utils/Array");
 
 import { autobind } from "OfficeFabric/Utilities";
 import { Fabric } from "OfficeFabric/Fabric";
@@ -33,7 +32,9 @@ interface IRelatedWitsState {
     settingsPanelOpen?: boolean;
     filterText?: string;
     sortColumn: string;
-    sortOrder: string;
+    sortOrder: string; 
+    relationsMap: IDictionaryStringTo<boolean>;
+    relationTypes?: WorkItemRelationType[];
 }
 
 export class RelatedWits extends React.Component<void, IRelatedWitsState> {
@@ -45,7 +46,8 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
             loading: true,
             items: [],    
             sortColumn: "System.CreatedDate",
-            sortOrder: "desc"
+            sortOrder: "desc",
+            relationsMap: null
         } as IRelatedWitsState;
     }
 
@@ -181,6 +183,8 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
                         sortColumn={this.state.sortColumn} 
                         sortOrder={this.state.sortOrder} 
                         workItemTypeColors={this.state.workItemTypeColors}
+                        relationsMap={this.state.relationsMap}
+                        relationTypes={this.state.relationTypes}
                         changeSort={this._changeSort} />;
         }
     }
@@ -221,7 +225,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
     }
 
     private async _refreshList(): Promise<void> {
-        this._updateState({isWorkItemLoaded: true, isNew: false, loading: true, items: []});
+        this._updateState({isWorkItemLoaded: true, isNew: false, loading: true, items: [], relationsMap: null});
 
         if (!this.state.settings) {
             await this._initializeSettings();
@@ -233,6 +237,30 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
         if (!this.state.workItemTypeColors) {
             this._initializeWorkItemTypeColors();
         }
+
+        if (!this.state.relationTypes) {
+            this._initializeWorkItemRelationTypes();
+        }
+
+        this._initializeLinksData();
+    }
+
+    private async _initializeWorkItemRelationTypes() {
+        const workItemFormService = await WorkItemFormService.getService();
+        const relationTypes = await workItemFormService.getWorkItemRelationTypes();
+        this._updateState({relationTypes: relationTypes});
+    }
+
+    private async _initializeLinksData() {
+        const workItemFormService = await WorkItemFormService.getService();
+        const relations = await workItemFormService.getWorkItemRelations();
+
+        let relationsMap = {};
+        relations.forEach(relation => {
+            relationsMap[relation.url] = true;
+        });
+
+        this._updateState({relationsMap: relationsMap});
     }
 
     private async _initializeSettings() {
@@ -276,50 +304,38 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
     }
 
     private async _createWiql(fieldsToSeek: string[], sortByField: string): Promise<{project: string, wiql: string}> {
-        let workItemFormService = await WorkItemFormService.getService();
-        let fieldValues = await workItemFormService.getFieldValues(fieldsToSeek, true);
-        let witId = await workItemFormService.getId();
-        let project = await workItemFormService.getFieldValue("System.TeamProject") as string;
+        const workItemFormService = await WorkItemFormService.getService();
+        const fieldValues = await workItemFormService.getFieldValues(fieldsToSeek, true);
+        const witId = await workItemFormService.getId();
+        const project = await workItemFormService.getFieldValue("System.TeamProject") as string;
        
         // Generate fields to retrieve part
-        let fieldsToRetrieveString: string = "";
-        Constants.DEFAULT_FIELDS_TO_RETRIEVE.forEach((fieldRefName: string) => {
-            fieldsToRetrieveString = `${fieldsToRetrieveString}[${fieldRefName}],`
-        });
-        // remove last comma
-        fieldsToRetrieveString = fieldsToRetrieveString.substring(0, fieldsToRetrieveString.length - 1);
+        const fieldsToRetrieveString = Constants.DEFAULT_FIELDS_TO_RETRIEVE.map(fieldRefName => `[${fieldRefName}]`).join(",");
 
         // Generate fields to seek part
-        let fieldsToSeekString: string = "";
-        fieldsToSeek.forEach((fieldRefName: string) => {
-            let fieldValue = fieldValues[fieldRefName];
-            if (Utils_String.equals(fieldRefName, "System.Tags", true) && fieldValue) {
-                fieldsToSeekString = fieldsToSeekString + " (";
-                let fieldValueStr = fieldValue.toString();
-                $.each(fieldValueStr.split(";"), (i: number, v: string) => {
-                    fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] CONTAINS '${v}' OR`
-                });
-                if (fieldsToSeekString) {
-                    // remove last OR
-                    fieldsToSeekString = fieldsToSeekString.substring(0, fieldsToSeekString.length - 3) + ") AND";
-                }
+        const fieldsToSeekString = fieldsToSeek.map(fieldRefName => {
+            const fieldValue = fieldValues[fieldRefName];
+            if (Utils_String.equals(fieldRefName, "System.Tags", true)) {
+                if (fieldValue) {
+                    let tagStr = fieldValue.toString().split(";").map(v => {
+                        return `[System.Tags] CONTAINS '${v}'`;
+                    }).join(" OR ");
+
+                    return `(${tagStr})`;
+                }                
             }
             else if (Constants.ExcludedFields.indexOf(fieldRefName) === -1) {
                 if (Utils_String.equals(typeof(fieldValue), "string", true) && fieldValue) {
-                    fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] = '${fieldValue}' AND`
+                    return `[${fieldRefName}] = '${fieldValue}'`;
                 }
-                else if (Utils_String.equals(typeof(fieldValue), "number", true) && fieldValue != null) {
-                    fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] = ${fieldValue} AND`
-                }
-                else if (Utils_String.equals(typeof(fieldValue), "boolean", true) && fieldValue != null) {
-                    fieldsToSeekString = `${fieldsToSeekString} [${fieldRefName}] = ${fieldValue} AND`
+                else {
+                    return `[${fieldRefName}] = ${fieldValue}`;
                 }
             }
-        });
-        if (fieldsToSeekString) {
-            // remove last OR
-            fieldsToSeekString = fieldsToSeekString.substring(0, fieldsToSeekString.length - 4);
-        }
+
+            return null;
+        }).filter(e => e != null).join(" AND ");
+
         let fieldsToSeekPredicate = fieldsToSeekString ? `AND ${fieldsToSeekString}` : "";
         let wiql = `SELECT ${fieldsToRetrieveString} FROM workitems 
                     where [System.TeamProject] = '${project}' AND [System.ID] <> ${witId} 
