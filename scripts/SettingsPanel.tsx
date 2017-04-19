@@ -102,7 +102,7 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
                     </div>
 
                     <div className="settings-control-container">
-                        <InfoLabel label="Sort by" info="Select a field which be used to sort the results" />
+                        <InfoLabel label="Sort by" info="Select a field which will be used to sort the results" />
                         <Dropdown                 
                             className="sort-field-dropdown"
                             onRenderList={this._onRenderCallout} 
@@ -111,7 +111,7 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
                     </div>
 
                     <div className="settings-control-container">
-                        <InfoLabel label="Fields to seek" info="Select a list of fields which be used to seek related work items" />
+                        <InfoLabel label="Fields to seek" info="Select a list of fields which will be used to seek related work items" />
                         <TagPicker
                             className="tagpicker"
                             defaultSelectedItems={this.state.queryFields.map(f => this._getFieldTag(f))}

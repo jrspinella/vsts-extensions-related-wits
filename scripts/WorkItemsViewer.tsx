@@ -234,6 +234,7 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                                 iconProps={{iconName: "Link"}}
                                 className="workitem-link-button"
                                 title="Add link"
+                                menuIconProps={{className: "chevron-down", iconName: "ChevronDown"}}
                                 menuProps={{
                                     className: "callout-container",
                                     items: this.props.relationTypes.filter(r => r.name != null && r.name.trim() !== "").map(relationType => {

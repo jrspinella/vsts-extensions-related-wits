@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "related-workitems",
-    "version": "1.0.6",
+    "version": "1.0.5",
     "name": "Related Work items",
     "description": "Gets a list of related work items for your current work item.",
     "publisher": "mohitbagra",
@@ -36,12 +36,16 @@
         "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits"
     },  
     "branding": {
-        "color": "#004578",
+        "color": "#106ebe",
         "theme": "dark"
     },
     "files": [
         {
             "path": "scripts",
+            "addressable": true
+        },
+        {
+            "path": "css",
             "addressable": true
         },
         {
