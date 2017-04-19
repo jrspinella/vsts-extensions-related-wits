@@ -248,7 +248,7 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                                                         isLocked: false
                                                     },
                                                     url: item.url
-                                                };
+                                                } as WorkItemRelation;
                                                 workItemFormService.addWorkItemRelations([workItemRelation]);
                                             }
                                         };

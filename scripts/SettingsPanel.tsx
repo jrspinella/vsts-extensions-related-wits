@@ -7,8 +7,6 @@ import { Label } from "OfficeFabric/Label";
 import { Dropdown } from "OfficeFabric/components/Dropdown/Dropdown";
 import { IDropdownOption, IDropdownProps } from "OfficeFabric/components/Dropdown/Dropdown.Props";
 import { TagPicker, ITag } from 'OfficeFabric/components/pickers/TagPicker/TagPicker';
-import { IPickerItemProps } from 'OfficeFabric/components/pickers/PickerItem.Props';
-import { TagItem } from 'OfficeFabric/components/pickers/TagPicker/TagItem';
 import { autobind } from "OfficeFabric/Utilities";
 import { Button, ButtonType } from "OfficeFabric/Button";
 import { TextField } from "OfficeFabric/TextField";

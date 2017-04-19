@@ -17,11 +17,11 @@
     "postinstall": "typings install"
   },
   "devDependencies": {
-    "@types/react": "^15.0.21",
-    "@types/react-dom": "^0.14.23",
+    "@types/react": "^15.0.22",
+    "@types/react-dom": "^15.5.0",
     "@types/jquery": "^2.0.41",
     "@types/q": "^1.0.0",
-    "webpack": "^2.3.3",
+    "webpack": "^2.4.1",
     "webpack-dev-server": "^2.4.2",
     "rimraf": "^2.6.1",
     "sass-loader": "^6.0.3",
@@ -32,12 +32,12 @@
     "tfx-cli": "^0.4.5",
     "typescript": "^2.2.2",
     "typings": "^2.1.0",
-    "uglifyjs-webpack-plugin": "^0.4.2",
+    "uglifyjs-webpack-plugin": "^0.4.3",
     "copy-webpack-plugin": "^4.0.1"
   },
   "dependencies": {
-    "vss-web-extension-sdk": "^2.114.0",
+    "vss-web-extension-sdk": "^2.115.0",
     "es6-promise": "^4.1.0",
-    "office-ui-fabric-react": "^2.17.0"
+    "office-ui-fabric-react": "^2.19.0"
   }
 }

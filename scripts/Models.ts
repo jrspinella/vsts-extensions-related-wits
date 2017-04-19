@@ -1,33 +1,9 @@
 import * as WitContracts from "TFS/WorkItemTracking/Contracts";
 
-export interface RelatedWitsControlOptions {
-    workItems:  RelatedWitReference[];
-    openWorkItem: (workItemId: number, newTab: boolean) => void;
-    linkWorkItem: (workItem: RelatedWitReference, relationType: string, comment: string) => void;
-}
-
-export interface RelatedWitReference extends WitContracts.WorkItem {
-    url: string;
-    isLinked: boolean;
-}
-
 export interface UserPreferenceModel {
     fields: string[];
     sortByField: string;
     top?: number;
-}
-
-export interface RelatedFieldsControlOptions {
-    selectedFields: string[];
-    allFields: WitContracts.WorkItemField[];
-    sortByField: string;
-    savePreferences: (model: UserPreferenceModel) => void;
-    refresh: (fields: string[], sortByField: string) => void;
-}
-
-export interface AddLinkDialogResult {
-    relationType: WitContracts.WorkItemRelationType;
-    comment: string;
 }
 
 export class Constants {

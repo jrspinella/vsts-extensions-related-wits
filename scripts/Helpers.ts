@@ -25,8 +25,8 @@ export function parseUniquefiedIdentityName(name: string): {displayName: string,
     let rightPart = "";
     let id = "";
     if (i >= 0 && j > i && j === name.length - 1) {
-        displayName = $.trim(name.substr(0, i));
-        rightPart = $.trim(name.substr(i + 1, j - i - 1)); //gets string in the <>
+        displayName = name.substr(0, i).trim();
+        rightPart = name.substr(i + 1, j - i - 1).trim();
         let vsIdFromAlias: string = getVsIdFromGroupUniqueName(rightPart); // if it has vsid in unique name (for TFS groups)
 
         if (rightPart.indexOf("@") !== -1 || rightPart.indexOf("\\") !== -1 || vsIdFromAlias || Utils_String.isGuid(rightPart)) {
@@ -75,7 +75,7 @@ export function getVsIdFromGroupUniqueName(str: string): string {
     }
 
     if (Utils_String.startsWith(leftPart, "id:")) {
-        let rightPart = $.trim(leftPart.substr(3));
+        let rightPart = leftPart.substr(3).trim();
         vsid = Utils_String.isGuid(rightPart) ? rightPart : "";
     }
 
