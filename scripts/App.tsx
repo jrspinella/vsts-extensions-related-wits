@@ -161,7 +161,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
     private _openQueryWiql(): string {
         let ids = this.state.items.map((workItem: WorkItem) => workItem.id).join(",");
 
-        return `SELECT [System.Id], [System.Title], [System.State], [System.AssignedTo], [System.AreaPath], [System.Tags]
+        return `SELECT [System.Id], [System.WorkItemType], [System.Title], [System.State], [System.AssignedTo], [System.AreaPath], [System.Tags]
                  FROM WorkItems 
                  WHERE [System.TeamProject] = @project 
                  AND [System.ID] IN (${ids}) 
@@ -213,8 +213,8 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
                     || Utils_String.caseInsensitiveContains(workItem.fields["System.AssignedTo"] || "", filterText)
                     || Utils_String.caseInsensitiveContains(workItem.fields["System.State"] || "", filterText)
                     || Utils_String.caseInsensitiveContains(workItem.fields["System.Title"] || "", filterText)
+                    || Utils_String.caseInsensitiveContains(workItem.fields["System.WorkItemType"] || "", filterText)
                     || Utils_String.caseInsensitiveContains(workItem.fields["System.AreaPath"] || "", filterText)
-                    || Utils_String.caseInsensitiveContains(workItem.fields["System.Tags"] || "", filterText);                    
             });
         }
     }

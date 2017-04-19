@@ -13,7 +13,11 @@
 	 ],
     "targets": [
         {
-            "id": "Microsoft.VisualStudio.Services"
+            "id": "Microsoft.VisualStudio.Services.Cloud"
+        },
+        {
+            "id": "Microsoft.TeamFoundation.Server",
+            "version": "[15.1,)"
         }
     ],
     "tags": [
@@ -32,7 +36,7 @@
         "uri": "https://github.com/mohitbagra/vsts-extensions-related-wits"
     },  
     "branding": {
-        "color": "#5C2D91",
+        "color": "#004578",
         "theme": "dark"
     },
     "files": [

@@ -131,6 +131,16 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                 isSortedDescending: Utils_String.equals(this.props.sortOrder, "desc", true)
             },
             {
+                fieldName: "System.WorkItemType",
+                key: "WorkItemType",
+                name:"Work Item Type",
+                minWidth: 80,
+                maxWidth: 100,
+                isResizable: true,
+                isSorted: Utils_String.equals(this.props.sortColumn, "System.WorkItemType", true),
+                isSortedDescending: Utils_String.equals(this.props.sortOrder, "desc", true)
+            },
+            {
                 fieldName: "System.Title",
                 key: "Title",
                 name:"Title",
@@ -144,8 +154,8 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                 fieldName: "System.State",
                 key: "State",
                 name:"State",
-                minWidth: 100,
-                maxWidth: 150,
+                minWidth: 70,
+                maxWidth: 120,
                 isResizable: true,
                 isSorted: Utils_String.equals(this.props.sortColumn, "System.State", true),
                 isSortedDescending: Utils_String.equals(this.props.sortOrder, "desc", true)
@@ -168,16 +178,6 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                 maxWidth: 350,
                 isResizable: true,
                 isSorted: Utils_String.equals(this.props.sortColumn, "System.AreaPath", true),
-                isSortedDescending: Utils_String.equals(this.props.sortOrder, "desc", true)
-            },
-            {
-                fieldName: "System.Tags",
-                key: "Tags",
-                name:"Tags",
-                minWidth: 150,
-                maxWidth: 350,
-                isResizable: true,
-                isSorted: Utils_String.equals(this.props.sortColumn, "System.Tags", true),
                 isSortedDescending: Utils_String.equals(this.props.sortOrder, "desc", true)
             }
         ];
@@ -231,7 +231,7 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
                     return (
                         <div className="link-cell">
                             <IconButton 
-                                icon="Link"
+                                iconProps={{iconName: "Link"}}
                                 className="workitem-link-button"
                                 title="Add link"
                                 menuProps={{
@@ -286,7 +286,7 @@ export class WorkItemsViewer extends React.Component<IWorkItemsViewerProps, IWor
         let selectedWorkItems = this._selection.getSelection() as WorkItem[];
         let ids = selectedWorkItems.map((w:WorkItem) => w.id).join(",");
 
-        return `SELECT [System.Id], [System.Title], [System.State], [System.AssignedTo], [System.AreaPath], [System.Tags]
+        return `SELECT [System.Id], [System.WorkItemType], [System.Title], [System.State], [System.AssignedTo], [System.AreaPath], [System.Tags]
                  FROM WorkItems 
                  WHERE [System.TeamProject] = @project 
                  AND [System.ID] IN (${ids}) 

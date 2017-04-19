@@ -8,13 +8,14 @@ import { Dropdown } from "OfficeFabric/components/Dropdown/Dropdown";
 import { IDropdownOption, IDropdownProps } from "OfficeFabric/components/Dropdown/Dropdown.Props";
 import { TagPicker, ITag } from 'OfficeFabric/components/pickers/TagPicker/TagPicker';
 import { autobind } from "OfficeFabric/Utilities";
-import { Button, ButtonType } from "OfficeFabric/Button";
+import { PrimaryButton } from "OfficeFabric/Button";
 import { TextField } from "OfficeFabric/TextField";
 
 import { Loading } from "./Loading";
 import { UserPreferenceModel, Constants } from "./Models";
 import { isInteger } from "./Helpers";
 import { UserPreferences } from "./UserPreferences";
+import { InfoLabel } from "./InfoLabel";
 
 import { WorkItemField } from "TFS/WorkItemTracking/Contracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
@@ -91,21 +92,26 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
         return (
             <div className="settings-panel">
                 <div className="settings-controls">
-                    <TextField label='Maximum number of workitems to retrieve' 
-                        className="top"
-                        required={true} 
-                        value={`${this.state.top}`} 
-                        onChanged={(newValue: string) => this._updateTop(newValue)} 
-                        onGetErrorMessage={this._getTopError} />
+                    <div className="settings-control-container">
+                        <InfoLabel label="Max count" info="Maximum number of work items to retrieve" />
+                        <TextField
+                            required={true} 
+                            value={`${this.state.top}`} 
+                            onChanged={(newValue: string) => this._updateTop(newValue)} 
+                            onGetErrorMessage={this._getTopError} />
+                    </div>
 
-                    <Dropdown label="Sort by field"                     
-                        className="sort-field-dropdown"
-                        onRenderList={this._onRenderCallout} 
-                        options={sortableFieldOptions} 
-                        onChanged={this._updateSortField} /> 
-                    
-                    <div className="tagpicker-container">
-                        <Label>Look for the following fields</Label>
+                    <div className="settings-control-container">
+                        <InfoLabel label="Sort by" info="Select a field which be used to sort the results" />
+                        <Dropdown                 
+                            className="sort-field-dropdown"
+                            onRenderList={this._onRenderCallout} 
+                            options={sortableFieldOptions} 
+                            onChanged={this._updateSortField} /> 
+                    </div>
+
+                    <div className="settings-control-container">
+                        <InfoLabel label="Fields to seek" info="Select a list of fields which be used to seek related work items" />
                         <TagPicker
                             className="tagpicker"
                             defaultSelectedItems={this.state.queryFields.map(f => this._getFieldTag(f))}
@@ -122,9 +128,9 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
                     </div>
                 </div>
 
-                <Button className="save-button" disabled={!this._isSettingsDirty() || !this._isSettingsValid()} buttonType={ButtonType.primary} onClick={this._onSaveClick}>
+                <PrimaryButton className="save-button" disabled={!this._isSettingsDirty() || !this._isSettingsValid()} onClick={this._onSaveClick}>
                     Save
-                </Button>
+                </PrimaryButton>
             </div>
         );    
     }

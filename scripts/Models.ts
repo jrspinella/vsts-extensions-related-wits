@@ -20,7 +20,6 @@ export class Constants {
         "System.AssignedTo",
         "System.AreaPath",
         "System.State",
-        "System.Tags"
     ];
 
     public static DEFAULT_FIELDS_TO_SEEK = [

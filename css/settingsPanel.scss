@@ -5,8 +5,12 @@
     .settings-controls {
         display: flex;
 
-        .tagpicker-container {
-            margin-left: 20px;
+        .settings-control-container {
+            margin-right: 20px;
+
+            .info-label {
+                margin-bottom: 5px;
+            }
 
             .tagpicker {
                 border: 1px solid #c8c8c8;
@@ -31,15 +35,11 @@
                     }
                 }                
             }
-        }
 
-        .top {
-            margin-right: 20px;
-        }
-
-        .sort-field-dropdown {
-            width: 200px;            
-        }
+            .sort-field-dropdown {
+                width: 200px;            
+            }
+        }        
     }
 
     .content-loading {
