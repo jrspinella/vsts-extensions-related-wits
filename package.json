@@ -10,10 +10,10 @@
     "cleanall": "npm run clean && rimraf typings node_modules",
     "dev": "webpack-dev-server -d --hot --progress --colors --content-base ./ --port 8888",
     "devssl": "webpack-dev-server -d --hot --progress --colors --https --content-base ./ --port 8888",
-    "build:release": "npm run clean && mkdir dist && webpack --display-error-details --progress --colors --output-path ./dist -p",
+    "build": "npm run clean && mkdir dist && webpack --display-error-details --progress --colors --output-path ./dist -p",
     "package:dev": "node ./configs/packageDev",
     "package:devssl": "node ./configs/packageDevSSL",
-    "package:release": "npm run build:release && node ./configs/packageRelease",    
+    "package:release": "npm run build && node ./configs/packageRelease",    
     "postinstall": "typings install"
   },
   "devDependencies": {
@@ -38,6 +38,7 @@
   "dependencies": {
     "vss-web-extension-sdk": "^2.115.0",
     "es6-promise": "^4.1.0",
-    "office-ui-fabric-react": "^2.19.0"
+    "office-ui-fabric-react": "^2.19.0",
+    "vsts-extension-react-widgets": "0.0.2"
   }
 }

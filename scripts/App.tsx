@@ -15,10 +15,11 @@ import { CommandBar } from "OfficeFabric/CommandBar";
 import { IContextualMenuItem } from "OfficeFabric/components/ContextualMenu/ContextualMenu.Props";
 import { SearchBox } from "OfficeFabric/SearchBox";
 
-import { Loading } from "./Loading";
-import { MessagePanel, MessageType } from "./MessagePanel";
-import { UserPreferenceModel, Constants } from "./Models";
-import { UserPreferences } from "./UserPreferences";
+import { Loading } from "VSTS_Extension/Loading";
+import { MessagePanel, MessageType } from "VSTS_Extension/MessagePanel";
+import { ExtensionDataManager } from "VSTS_Extension/ExtensionDataManager";
+
+import { Settings, Constants } from "./Models";
 import { WorkItemsViewer } from "./WorkItemsViewer";
 import { SettingsPanel } from "./SettingsPanel";
 
@@ -27,7 +28,7 @@ interface IRelatedWitsState {
     items: WorkItem[];
     isWorkItemLoaded?: boolean;
     isNew?: boolean;
-    settings?: UserPreferenceModel;
+    settings?: Settings;
     workItemTypeColors?: IDictionaryStringTo<{color: string, stateColors: IDictionaryStringTo<string>}>;
     settingsPanelOpen?: boolean;
     filterText?: string;
@@ -112,7 +113,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
                         this.state.settingsPanelOpen && 
                         <SettingsPanel 
                             settings={this.state.settings} 
-                            onSave={(settings: UserPreferenceModel) => {
+                            onSave={(settings: Settings) => {
                                 this._updateState({settings: settings});
                                 this._refreshList();
                             }} />
@@ -267,7 +268,10 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
         const workItemFormService = await WorkItemFormService.getService();
         const workItemType = await workItemFormService.getFieldValue("System.WorkItemType") as string;
         const project = await workItemFormService.getFieldValue("System.TeamProject") as string;
-        const settings = await UserPreferences.readUserSetting(workItemType);
+        let settings = await ExtensionDataManager.readUserSetting<Settings>(`${Constants.StorageKey}_${workItemType}`, Constants.DEFAULT_SETTINGS, true);
+        if (settings.top == null || settings.top <= 0) {
+            settings.top = Constants.DEFAULT_RESULT_SIZE;
+        }
 
         this._updateState({settings: settings});
     }

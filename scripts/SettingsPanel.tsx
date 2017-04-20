@@ -11,20 +11,20 @@ import { autobind } from "OfficeFabric/Utilities";
 import { PrimaryButton } from "OfficeFabric/Button";
 import { TextField } from "OfficeFabric/TextField";
 
-import { Loading } from "./Loading";
-import { UserPreferenceModel, Constants } from "./Models";
-import { isInteger } from "./Helpers";
-import { UserPreferences } from "./UserPreferences";
-import { InfoLabel } from "./InfoLabel";
-
 import { WorkItemField } from "TFS/WorkItemTracking/Contracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
 import Utils_String = require("VSS/Utils/String");
 import Utils_Array = require("VSS/Utils/Array");
 
+import { ExtensionDataManager } from "VSTS_Extension/ExtensionDataManager";
+import { Loading } from "VSTS_Extension/Loading";
+import { InfoLabel } from "VSTS_Extension/InfoLabel";
+
+import { Settings, Constants } from "./Models";
+
 interface ISettingsPanelProps {
-    settings: UserPreferenceModel;
-    onSave: (userPreferenceModel: UserPreferenceModel) => void
+    settings: Settings;
+    onSave: (userPreferenceModel: Settings) => void
 }
 
 interface ISettingsPanelState {
@@ -135,12 +135,16 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
         );    
     }
 
+    private _isInteger(value: string): boolean {
+        return /^\d+$/.test(value);
+    }
+
     @autobind
     private _getTopError(value: string): string {
         if (value == null || value.trim() === "") {
             return "A value is required";
         }
-        if (!isInteger(value)) {
+        if (!this._isInteger(value)) {
             return "Enter a positive integer value";
         }
         if (parseInt(value) > 500) {
@@ -156,7 +160,7 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
     }
 
     private _isSettingsValid(): boolean {
-        return isInteger(this.state.top) && parseInt(this.state.top) > 0 && parseInt(this.state.top) <= 500;
+        return this._isInteger(this.state.top) && parseInt(this.state.top) > 0 && parseInt(this.state.top) <= 500;
     }
 
     @autobind
@@ -165,7 +169,7 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
             return;
         }
 
-        let userPreferenceModel: UserPreferenceModel = {
+        let userPreferenceModel: Settings = {
             sortByField: this.state.sortField.referenceName,
             fields: this.state.queryFields.map(f => f.referenceName),
             top: parseInt(this.state.top)
@@ -174,7 +178,7 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
         const workItemFormService = await WorkItemFormService.getService();
         const workItemType = await workItemFormService.getFieldValue("System.WorkItemType") as string;
 
-        await UserPreferences.writeUserSetting(workItemType, userPreferenceModel);
+        await ExtensionDataManager.writeUserSetting<Settings>(`${Constants.StorageKey}_${workItemType}`, userPreferenceModel, true);
         this.props.onSave(userPreferenceModel);
     }
         

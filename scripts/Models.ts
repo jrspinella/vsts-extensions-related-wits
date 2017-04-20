@@ -1,6 +1,6 @@
 import * as WitContracts from "TFS/WorkItemTracking/Contracts";
 
-export interface UserPreferenceModel {
+export interface Settings {
     fields: string[];
     sortByField: string;
     top?: number;
@@ -28,6 +28,12 @@ export class Constants {
         "System.State",
         "System.AreaPath"
     ];
+
+    public static DEFAULT_SETTINGS = {
+        fields: Constants.DEFAULT_FIELDS_TO_SEEK,
+        sortByField: Constants.DEFAULT_SORT_BY_FIELD,
+        top: Constants.DEFAULT_RESULT_SIZE
+    }
 
     public static QueryableFieldTypes = [
         WitContracts.FieldType.Boolean,

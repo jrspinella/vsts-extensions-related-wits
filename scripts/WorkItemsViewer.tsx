@@ -12,11 +12,11 @@ import { autobind } from "OfficeFabric/Utilities";
 import { IContextualMenuItem } from "OfficeFabric/components/ContextualMenu/ContextualMenu.Props";
 import { ContextualMenu } from "OfficeFabric/ContextualMenu";
 
+import { IdentityView } from "VSTS_Extension/IdentityView";
+
 import Utils_String = require("VSS/Utils/String");
 import { WorkItemFormNavigationService, WorkItemFormService } from "TFS/WorkItemTracking/Services";
 import { WorkItem, WorkItemRelationType, WorkItemRelation } from "TFS/WorkItemTracking/Contracts";
-
-import { IdentityView } from "./IdentityView";
 
 interface IWorkItemsViewerProps {
     items: WorkItem[];
