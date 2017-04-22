@@ -7,10 +7,10 @@
   "version": "1.0.0",
   "scripts": {
     "clean": "rimraf dist *.vsix",
-    "cleanall": "npm run clean && rimraf typings node_modules",
-    "dev": "webpack-dev-server -d --hot --progress --colors --content-base ./ --port 8888",
-    "devssl": "webpack-dev-server -d --hot --progress --colors --https --content-base ./ --port 8888",
+    "clean:all": "npm run clean && rimraf typings node_modules",
     "build": "npm run clean && mkdir dist && webpack --display-error-details --progress --colors --output-path ./dist -p",
+    "dev": "webpack-dev-server -d --hot --progress --colors --content-base ./ --port 8888",
+    "dev:ssl": "webpack-dev-server -d --hot --progress --colors --https --content-base ./ --port 8888",    
     "package:dev": "node ./configs/packageDev",
     "package:devssl": "node ./configs/packageDevSSL",
     "package:release": "npm run build && node ./configs/packageRelease",    
@@ -38,7 +38,7 @@
   "dependencies": {
     "vss-web-extension-sdk": "^2.115.0",
     "es6-promise": "^4.1.0",
-    "office-ui-fabric-react": "^2.19.0",
-    "vsts-extension-react-widgets": "0.0.2"
+    "office-ui-fabric-react": "^2.21.0",
+    "vsts-extension-react-widgets": "0.0.3"
   }
 }
