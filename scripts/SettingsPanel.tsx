@@ -10,15 +10,16 @@ import { TagPicker, ITag } from 'OfficeFabric/components/pickers/TagPicker/TagPi
 import { autobind } from "OfficeFabric/Utilities";
 import { PrimaryButton } from "OfficeFabric/Button";
 import { TextField } from "OfficeFabric/TextField";
+import { Panel } from "OfficeFabric/Panel";
 
 import { WorkItemField } from "TFS/WorkItemTracking/Contracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
 import Utils_String = require("VSS/Utils/String");
 import Utils_Array = require("VSS/Utils/Array");
 
-import { ExtensionDataManager } from "VSTS_Extension/ExtensionDataManager";
-import { Loading } from "VSTS_Extension/Loading";
-import { InfoLabel } from "VSTS_Extension/InfoLabel";
+import { ExtensionDataManager } from "VSTS_Extension/utilities/ExtensionDataManager";
+import { Loading } from "VSTS_Extension/components/Loading";
+import { InfoLabel } from "VSTS_Extension/components/InfoLabel";
 
 import { Settings, Constants } from "./Models";
 
@@ -90,7 +91,11 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
         });
 
         return (
-            <div className="settings-panel">
+            <Panel
+                className="settings-panel"
+                isOpen={true}
+                isLightDismiss={true} >
+                
                 <div className="settings-controls">
                     <div className="settings-control-container">
                         <InfoLabel label="Max count" info="Maximum number of work items to retrieve" />
@@ -131,7 +136,7 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
                 <PrimaryButton className="save-button" disabled={!this._isSettingsDirty() || !this._isSettingsValid()} onClick={this._onSaveClick}>
                     Save
                 </PrimaryButton>
-            </div>
+            </Panel>
         );    
     }
 
