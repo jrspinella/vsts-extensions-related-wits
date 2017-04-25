@@ -30,7 +30,7 @@
         overflow: auto;
         flex: 1;
 
-        .work-items-grid-title-cell {
+        .title-cell {
             display: flex;
 
             .overflow-ellipsis {
@@ -46,7 +46,7 @@
             }
         }
 
-        .work-items-grid-state-cell {
+        .state-cell {
             display: flex;
 
             .work-item-type-state-color {

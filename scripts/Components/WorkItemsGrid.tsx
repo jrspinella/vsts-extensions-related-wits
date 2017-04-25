@@ -1,16 +1,15 @@
 import "../../css/WorkItemsGrid.scss";
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
-import {IWorkItemsGridProps, IWorkItemsGridState, SortOrder} from "./Interfaces/WorkItemsGrid.Props";
+import {IWorkItemsGridProps, IWorkItemsGridState, SortOrder, ColumnPosition, ColumnType, IColumnsProps, IColumnProps} from "./Interfaces/WorkItemsGrid.Props";
 
 import { DetailsList } from "OfficeFabric/DetailsList";
 import { DetailsListLayoutMode, IColumn, CheckboxVisibility, ConstrainMode } from "OfficeFabric/components/DetailsList/DetailsList.Props";
 import { SelectionMode } from "OfficeFabric/utilities/selection/interfaces";
 import { Selection } from "OfficeFabric/utilities/selection/Selection";
 import { autobind } from "OfficeFabric/Utilities";
-import { IContextualMenuItem } from "OfficeFabric/components/ContextualMenu/ContextualMenu.Props";
+import { IContextualMenuItem, ContextualMenuItemType } from "OfficeFabric/components/ContextualMenu/ContextualMenu.Props";
 import { ContextualMenu } from "OfficeFabric/ContextualMenu";
 import { CommandBar } from "OfficeFabric/CommandBar";
 import { SearchBox } from "OfficeFabric/SearchBox";
@@ -19,47 +18,39 @@ import { Loading } from "VSTS_Extension/components/Loading";
 import { IdentityView } from "VSTS_Extension/components/IdentityView";
 import { MessagePanel, MessageType } from "VSTS_Extension/components/MessagePanel";
 import { FluxContext } from "./Interfaces/FluxContext";
+import * as WorkItemsHelpers from "../Helpers/WorkItemsHelpers";
 
 import * as WitClient from "TFS/WorkItemTracking/RestClient";
 import Utils_String = require("VSS/Utils/String");
 import Utils_Core = require("VSS/Utils/Core");
-import { WorkItemFormNavigationService } from "TFS/WorkItemTracking/Services";
 import { WorkItem, WorkItemField, FieldType, WorkItemType, WorkItemStateColor } from "TFS/WorkItemTracking/Contracts";
 
-function getColumnSize(field: WorkItemField): {minWidth: number, maxWidth: number} {
-    if (Utils_String.equals(field.referenceName, "System.Id", true)) {
-        return { minWidth: 40, maxWidth: 70}
-    }
-    else if (Utils_String.equals(field.referenceName, "System.WorkItemType", true)) {
-        return { minWidth: 80, maxWidth: 100}
-    }
-    else if (Utils_String.equals(field.referenceName, "System.Title", true)) {
-        return { minWidth: 150, maxWidth: 300}
-    }
-    else if (Utils_String.equals(field.referenceName, "System.State", true)) {
-        return { minWidth: 70, maxWidth: 120}
-    }
-    else if (field.type === FieldType.TreePath) {
-        return { minWidth: 150, maxWidth: 350}
-    }
-    else if (field.type === FieldType.Boolean) {
-        return { minWidth: 40, maxWidth: 40}
-    }
-    else if (field.type === FieldType.DateTime) {
-        return { minWidth: 80, maxWidth: 150}
-    }
-    else if (field.type === FieldType.Double ||
-        field.type === FieldType.Integer ||
-        field.type === FieldType.PicklistDouble ||
-        field.type === FieldType.PicklistInteger) {
-        return { minWidth: 50, maxWidth: 100}
-    }
-    else {
-        return { minWidth: 100, maxWidth: 250}
-    }
-}
+
 
 export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkItemsGridState> {
+    static defaultProps = {
+        refreshWorkItems: null,
+        selectionMode: SelectionMode.multiple,
+        onItemInvoked: (item: WorkItem, index: number) => {
+            WorkItemsHelpers.openWorkItemDialog(null, item);
+        },
+        columnsProps: {
+            disableSort: false,
+            disableColumnResize: false,
+            extraColumns: []
+        },
+        commandBarProps: {
+            hideSearchBox: false,
+            hideCommandBar: false,
+            extraCommandMenuItems: [],
+            farCommandMenuItems: []
+        },
+        contextMenuProps: {
+            disableContextMenu: false,
+            extraContextMenuItems: null
+        }
+    } as IWorkItemsGridProps;
+
     private _selection: Selection;
     private _searchTimeout: any
     private _context: FluxContext;
@@ -73,10 +64,10 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
 
     private _initializeState() {
         this.state = {
-            filteredItems: this._sortAndFilterWorkItems(this.props.items || [], this.props.sortColumn, this.props.sortOrder, ""),
+            filteredItems: this.props.items || [],
             items: this.props.items || [],
-            sortColumn: this.props.sortColumn,
-            sortOrder: this.props.sortOrder,
+            sortColumn: null,
+            sortOrder: SortOrder.ASC,
             filterText: ""
         };
     }
@@ -88,10 +79,6 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
 
     public componentWillUnmount() {
         this._context.stores.workItemColorStore.removeChangedListener(this._onStoreChanged);
-    }    
-
-    public componentWillReceiveProps(nextProps: Readonly<IWorkItemsGridProps>, nextContext: any): void {
-
     }
 
     public render(): JSX.Element {
@@ -99,7 +86,7 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
             <div className={this._getClassName()}>
                 {this._renderCommandBar()}
                 {this._renderWorkItemGrid()}
-                {this.state.isContextMenuVisible && (
+                {this.state.isContextMenuVisible && !this.props.contextMenuProps.disableContextMenu && (
                     <ContextualMenu
                         className={this._getClassName("context-menu")}
                         items={this._getContextMenuItems()}
@@ -115,7 +102,7 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
     private _renderCommandBar(): JSX.Element {
         return (
             <div className={this._getClassName("menu-bar-container")}>
-                {!this.props.hideSearchBox && (
+                {!this.props.commandBarProps.hideSearchBox && (
                     <SearchBox 
                         className={this._getClassName("searchbox")}
                         value={this.state.filterText || ""}
@@ -123,7 +110,7 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
                         onChange={this._updateFilterText} />
                 )}
 
-                {!this.props.hideCommandBar && (
+                {!this.props.commandBarProps.hideCommandBar && (
                     <CommandBar 
                         className={this._getClassName("menu-bar")}
                         items={this._getCommandMenuItems()} 
@@ -157,8 +144,9 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
             }
         });
         
-        if (this.props.extraCommandMenuItems && this.props.extraCommandMenuItems.length > 0) {
-            menuItems = menuItems.concat(this.props.extraCommandMenuItems);
+        if (this.props.commandBarProps.extraCommandMenuItems && this.props.commandBarProps.extraCommandMenuItems.length > 0) {
+            menuItems.push({ key: "divider", name: "Divider", itemType: ContextualMenuItemType.Divider });
+            menuItems = menuItems.concat(this.props.commandBarProps.extraCommandMenuItems);
         }
 
         return menuItems;
@@ -173,28 +161,33 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
             }
         ];
         
-        if (this.props.farCommandMenuItems && this.props.farCommandMenuItems.length > 0) {
-            menuItems = menuItems.concat(this.props.farCommandMenuItems);
+        if (this.props.commandBarProps.farCommandMenuItems && this.props.commandBarProps.farCommandMenuItems.length > 0) {
+            menuItems = menuItems.concat(this.props.commandBarProps.farCommandMenuItems);
         }
 
         return menuItems;
     }
 
     private _getContextMenuItems(): IContextualMenuItem[] {
-        let contextMenuItems: IContextualMenuItem[] = [            
+        const selectedWorkItems = this._selection.getSelection() as WorkItem[];
+
+        let contextMenuItems: IContextualMenuItem[] = [
             {
                 key: "OpenQuery", name: "Open as query", title: "Open selected workitems as a query", iconProps: {iconName: "OpenInNewWindow"}, 
                 disabled: this._selection.getSelectedCount() == 0,
-                onClick: (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
-                    const selectedWorkItems = this._selection.getSelection() as WorkItem[];
+                onClick: (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {                    
                     const url = `${VSS.getWebContext().host.uri}/${VSS.getWebContext().project.id}/_workitems?_a=query&wiql=${encodeURIComponent(this._getWiql(selectedWorkItems))}`;
                     window.open(url, "_blank");
                 }
             }
         ];
 
-        if (this.props.extraContextMenuItems && this.props.extraContextMenuItems.length > 0) {
-            contextMenuItems = contextMenuItems.concat(this.props.extraContextMenuItems);
+        if (this.props.contextMenuProps.extraContextMenuItems) {
+            const extraContextMenus = this.props.contextMenuProps.extraContextMenuItems(selectedWorkItems);
+            if (extraContextMenus && extraContextMenus.length > 0) {
+                contextMenuItems.push({ key: "divider", name: "Divider", itemType: ContextualMenuItemType.Divider });
+                contextMenuItems = contextMenuItems.concat(extraContextMenus);
+            }
         }
 
         return contextMenuItems;
@@ -220,12 +213,7 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
                         items={this.state.filteredItems}
                         className={this._getClassName("grid")}
                         onItemInvoked={(item: WorkItem, index: number) => {
-                            if (this.props.onItemInvoked) {
-                                this.props.onItemInvoked(item, index);
-                            }
-                            else {
-                                this._openWorkItemDialog(null, item);
-                            }                        
+                            this.props.onItemInvoked(item, index);
                         }}
                         selection={ this._selection }
                         onItemContextMenu={this._showContextMenu}
@@ -234,19 +222,10 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
         }
     }
 
-    private _sortAndFilterWorkItems(workItems: WorkItem[], sortColumn: string, sortOrder: SortOrder, filterText: string): WorkItem[] {
+    private _sortAndFilterWorkItems(workItems: WorkItem[], sortColumn: IColumn, sortOrder: SortOrder, filterText: string): WorkItem[] {
         let items = (workItems || []).slice();
-        if (sortColumn) {
-            items = items.sort((w1: WorkItem, w2: WorkItem) => {
-                if (Utils_String.equals(sortColumn, "System.Id", true)) {
-                    return sortOrder === SortOrder.DESC ? ((w1.id > w2.id) ? -1 : 1) : ((w1.id > w2.id) ? 1 : -1);
-                }            
-                else {
-                    let v1 = w1.fields[sortColumn];
-                    let v2 = w2.fields[sortColumn];
-                    return sortOrder === SortOrder.DESC ? -1 * Utils_String.ignoreCaseComparer(v1, v2) : Utils_String.ignoreCaseComparer(v1, v2);
-                }
-            });
+        if (sortColumn && sortColumn.data.comparer) {
+            items = items.sort((w1: WorkItem, w2: WorkItem) => sortColumn.data.comparer(w1, w2, sortColumn.key, sortOrder));
         }
 
         if (filterText == null || filterText.trim() === "") {
@@ -270,83 +249,77 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
     }
 
     private _getColumns(): IColumn[] {
-        return this.props.fieldColumns.map(f => {
-            const columnSize = getColumnSize(f);
+        let columns: IColumn[] = [];
+        let leftColumns: IColumn[] = [];
+        let rightColumns: IColumn[] = [];
+
+        let extraColumnMapper = (ec: IColumnProps) => {
+            return {
+                fieldName: ec.key,
+                key: ec.key,
+                name: ec.name,
+                minWidth: ec.minWidth || 50,
+                maxWidth: ec.maxWidth || 100,
+                isResizable: !this.props.columnsProps.disableColumnResize,
+                data: { type: ColumnType.Custom, renderer: ec.renderer, comparer: ec.comparer },
+                isSorted: this.state.sortColumn && Utils_String.equals(this.state.sortColumn.key, ec.key, true),
+                isSortedDescending: this.state.sortOrder && this.state.sortOrder === SortOrder.DESC
+            }
+        }
+
+        if (this.props.columnsProps.extraColumns && this.props.columnsProps.extraColumns.length > 0) {
+            leftColumns = this.props.columnsProps.extraColumns.map(extraColumnMapper);
+            rightColumns = this.props.columnsProps.extraColumns.filter(ec => ec.position !== ColumnPosition.FarLeft).map(extraColumnMapper);            
+        }
+
+        if (leftColumns.length > 0) {
+            columns = columns.concat(leftColumns);
+        }
+
+        columns = columns.concat(this.props.fieldColumns.map(f => {
+            const columnSize = WorkItemsHelpers.getColumnSize(f);
             return {
                 fieldName: f.referenceName,
                 key: f.referenceName,
                 name: f.name,
+                data: { type: ColumnType.Field, renderer: WorkItemsHelpers.workItemFieldCellRenderer, comparer: WorkItemsHelpers.workItemFieldValueComparer },
                 minWidth: columnSize.minWidth,
                 maxWidth: columnSize.maxWidth,
-                isResizable: !this.props.disableColumnResize,
-                isSorted: this.state.sortColumn && Utils_String.equals(this.state.sortColumn, f.referenceName, true),
+                isResizable: !this.props.columnsProps.disableColumnResize,
+                isSorted: this.state.sortColumn && Utils_String.equals(this.state.sortColumn.key, f.referenceName, true),
                 isSortedDescending: this.state.sortOrder && this.state.sortOrder === SortOrder.DESC
             }
-        });        
+        }));
+
+        if (rightColumns.length > 0) {
+            columns = columns.concat(rightColumns);
+        }
+
+        return columns;
     }
 
     @autobind
-    private _onColumnHeaderClick(ev?: React.MouseEvent<HTMLElement>, column?: IColumn) {
-        if (!this.props.disableSort) {
+    private _onColumnHeaderClick(ev: React.MouseEvent<HTMLElement>, column: IColumn) {
+        if (!this.props.columnsProps.disableSort && column.data.comparer) {
             const sortOrder = column.isSortedDescending ? SortOrder.ASC : SortOrder.DESC;
-            this._updateState({sortColumn: column.fieldName, sortOrder: sortOrder, filteredItems: this._sortAndFilterWorkItems(this.state.items, column.fieldName, sortOrder, this.state.filterText)});
+            this._updateState({sortColumn: column, sortOrder: sortOrder, filteredItems: this._sortAndFilterWorkItems(this.state.items, column, sortOrder, this.state.filterText)});
         }
     }
 
     @autobind
-    private _onRenderCell(item: WorkItem, index?: number, column?: IColumn): React.ReactNode {
-        let text: string;
-        switch (column.fieldName.toLowerCase()) {
-            case "system.id":  
-                text = item.id.toString();
-                break;
-            case "system.title":
-                let witColor = this.state.workItemTypeAndStateColors && 
-                            this.state.workItemTypeAndStateColors[item.fields["System.WorkItemType"]] && 
-                            this.state.workItemTypeAndStateColors[item.fields["System.WorkItemType"]].color;
-                return (
-                    <div className={this._getClassName("title-cell")} title={item.fields[column.fieldName]}>
-                        <span 
-                            className="overflow-ellipsis" 
-                            onClick={(e) => this._openWorkItemDialog(e, item)}
-                            style={{borderColor: witColor ? "#" + witColor : "#000"}}>
-
-                            {item.fields[column.fieldName]}
-                        </span>
-                    </div>
-                );
-            case "system.state":
-                return (
-                    <div className={this._getClassName("state-cell")} title={item.fields[column.fieldName]}>
-                        {
-                            this.state.workItemTypeAndStateColors &&
-                            this.state.workItemTypeAndStateColors[item.fields["System.WorkItemType"]] &&
-                            this.state.workItemTypeAndStateColors[item.fields["System.WorkItemType"]].stateColors &&
-                            this.state.workItemTypeAndStateColors[item.fields["System.WorkItemType"]].stateColors[item.fields["System.State"]] &&
-                            <span 
-                                className="work-item-type-state-color" 
-                                style={{
-                                    backgroundColor: "#" + this.state.workItemTypeAndStateColors[item.fields["System.WorkItemType"]].stateColors[item.fields["System.State"]],
-                                    borderColor: "#" + this.state.workItemTypeAndStateColors[item.fields["System.WorkItemType"]].stateColors[item.fields["System.State"]]
-                                }} />
-                        }
-                        <span className="overflow-ellipsis">{item.fields[column.fieldName]}</span>
-                    </div>
-                );
-            case "system.assignedto":  // check isidentity flag
-                return <IdentityView identityDistinctName={item.fields[column.fieldName]} />;                      
-            default:
-                text = item.fields[column.fieldName];  
-                break;          
+    private _onRenderCell(item: WorkItem, index: number, column: IColumn): React.ReactNode {
+        if (column.data.type === ColumnType.Custom) {
+            return column.data.renderer ? column.data.renderer(item, index) : null;
         }
-
-        return <div className="overflow-ellipsis" title={text}>{text}</div>;
+        else {
+            return column.data.renderer(item, index, column, {workItemTypeAndStateColors: this.state.workItemTypeAndStateColors});
+        }        
     }        
 
     private _getWiql(workItems?: WorkItem[]): string {
         const fieldStr = this.props.fieldColumns.map(f => `[${f.referenceName}]`).join(",");
         const ids = (workItems || this.state.filteredItems).map(w => w.id).join(",");
-        const sortColumn = this.state.sortColumn || "System.CreatedDate";
+        const sortColumn = this.state.sortColumn && this.state.sortColumn.data.type === ColumnType.Field ? this.state.sortColumn.key : "System.CreatedDate";
         const sortOrder = this.state.sortOrder === SortOrder.DESC ? "DESC" : "";
 
         return `SELECT ${fieldStr}
@@ -371,23 +344,19 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
 
     @autobind
     private _showContextMenu(item?: WorkItem, index?: number, e?: MouseEvent) {
-        if (!this._selection.isIndexSelected(index)) {
-            // if not already selected, unselect every other row and select this one
-            this._selection.setAllSelected(false);
-            this._selection.setIndexSelected(index, true, true);
-        }        
-        this._updateState({contextMenuTarget: e, isContextMenuVisible: true});
+        if (!this.props.contextMenuProps.disableContextMenu) {
+            if (!this._selection.isIndexSelected(index)) {
+                // if not already selected, unselect every other row and select this one
+                this._selection.setAllSelected(false);
+                this._selection.setIndexSelected(index, true, true);
+            }        
+            this._updateState({contextMenuTarget: e, isContextMenuVisible: true});
+        }
     }
 
     @autobind
     private _hideContextMenu(e?: any) {
         this._updateState({contextMenuTarget: null, isContextMenuVisible: false});
-    }
-
-    private async _openWorkItemDialog(e: React.MouseEvent<HTMLElement>, item: WorkItem): Promise<void> {
-        let newTab = e ? e.ctrlKey : false;
-        let workItemNavSvc = await WorkItemFormNavigationService.getService();
-        workItemNavSvc.openWorkItem(item.id, newTab);
     }
 
     private _updateState(updatedStates: IWorkItemsGridState) {
