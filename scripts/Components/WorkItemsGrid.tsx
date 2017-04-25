@@ -1,4 +1,4 @@
-import "../css/WorkItemsGrid.scss";
+import "../../css/WorkItemsGrid.scss";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -18,6 +18,7 @@ import { SearchBox } from "OfficeFabric/SearchBox";
 import { Loading } from "VSTS_Extension/components/Loading";
 import { IdentityView } from "VSTS_Extension/components/IdentityView";
 import { MessagePanel, MessageType } from "VSTS_Extension/components/MessagePanel";
+import { FluxContext } from "./Interfaces/FluxContext";
 
 import * as WitClient from "TFS/WorkItemTracking/RestClient";
 import Utils_String = require("VSS/Utils/String");
@@ -61,10 +62,12 @@ function getColumnSize(field: WorkItemField): {minWidth: number, maxWidth: numbe
 export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkItemsGridState> {
     private _selection: Selection;
     private _searchTimeout: any
+    private _context: FluxContext;
 
     constructor(props: IWorkItemsGridProps, context: any) {
         super(props, context);
         this._selection = new Selection();
+        this._context = FluxContext.get();
         this._initializeState();
     }
 
@@ -79,12 +82,16 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
     }
 
     public componentDidMount() {
-        this.props.context.stores.workItemTypeStore.addChangedListener(this._onStoreChanged);
-        this._initializeWorkItemTypeColors();
+        this._context.stores.workItemColorStore.addChangedListener(this._onStoreChanged);
+        this._context.actionsCreator.initializeWorkItemColors();
     }
 
     public componentWillUnmount() {
-        this.props.context.stores.workItemTypeStore.removeChangedListener(this._onStoreChanged);
+        this._context.stores.workItemColorStore.removeChangedListener(this._onStoreChanged);
+    }    
+
+    public componentWillReceiveProps(nextProps: Readonly<IWorkItemsGridProps>, nextContext: any): void {
+
     }
 
     public render(): JSX.Element {
@@ -387,6 +394,13 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
         this.setState({...this.state, ...updatedStates});
     }
 
+    @autobind
+    private _onStoreChanged() {
+         if (this._context.stores.workItemColorStore.isLoaded()) {
+             this._updateState({workItemTypeAndStateColors: this._context.stores.workItemColorStore.getAll()});
+         }
+    }
+
     private _getClassName(className?: string): string {
         if (className) {
             return `work-items-grid-${className}`;
@@ -394,32 +408,5 @@ export class WorkItemsGrid extends React.Component<IWorkItemsGridProps, IWorkIte
         else {
             return "work-items-grid";
         }        
-    }
-
-    private async _initializeWorkItemTypeColors() {
-        if (this.state.workItemTypeAndStateColors) {
-            return;
-        }
-
-        let workItemTypeAndStateColors: IDictionaryStringTo<{color: string, stateColors: IDictionaryStringTo<string>}> = {};
-        const projectId = VSS.getWebContext().project.id;
-        
-        const workItemTypes = await WitClient.getClient().getWorkItemTypes(projectId);
-        workItemTypes.forEach((wit: WorkItemType) => workItemTypeAndStateColors[wit.name] = {
-            color: wit.color,
-            stateColors: {}
-        });
-
-        try {
-            await Promise.all(workItemTypes.map(async (wit: WorkItemType) => {
-                let stateColors = await WitClient.getClient().getWorkItemTypeStates(projectId, wit.name);
-                stateColors.forEach((stateColor: WorkItemStateColor) => workItemTypeAndStateColors[wit.name].stateColors[stateColor.name] = stateColor.color);
-            }));
-        }
-        catch (e) {
-
-        }
-        
-        this._updateState({workItemTypeAndStateColors: workItemTypeAndStateColors});
     }
 }

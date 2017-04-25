@@ -23,7 +23,6 @@ import { StoresHub } from "./Stores/StoresHub";
 
 import { Settings, Constants } from "./Models";
 import { WorkItemsGrid } from "./Components/WorkItemsGrid";
-import { FluxComponent } from "./Components/FluxComponent";
 import { SettingsPanel } from "./SettingsPanel";
 
 interface IRelatedWitsState {
@@ -36,7 +35,7 @@ interface IRelatedWitsState {
     fieldsMap?: IDictionaryStringTo<WorkItemField>;
 }
 
-export class RelatedWits extends FluxComponent<void, IRelatedWitsState> {
+export class RelatedWits extends React.Component<void, IRelatedWitsState> {
 
     constructor(props: void, context?: any) {
         super(props, context);        

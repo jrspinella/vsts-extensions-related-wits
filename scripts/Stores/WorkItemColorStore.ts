@@ -22,8 +22,10 @@ export class WorkItemColorStore extends Store implements IWorkItemColorStore {
         this._items = null;
 
         actions.InitializeWorkItemColors.addListener((items: IDictionaryStringTo<{color: string, stateColors: IDictionaryStringTo<string>}>) => {            
-            this._items = items;
-            this.emitChanged();
+            if (items) {
+                this._items = items;
+            }
+            this.emitChanged();          
         });
     }
 
