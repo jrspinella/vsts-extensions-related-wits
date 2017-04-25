@@ -7,7 +7,7 @@ export interface IWorkItemsGridProps {
     items: WorkItem[];
     refreshWorkItems?: () => Promise<WorkItem[]>;
     sortColumn?: string;
-    sortOrder?: string;
+    sortOrder?: SortOrder;
     disableSort?: boolean;
     disableColumnResize?: boolean;
     pageSize?: number;
@@ -21,14 +21,19 @@ export interface IWorkItemsGridProps {
     selectionMode?: SelectionMode;
 }
 
-export interface IWorkItemsGridState  {    
+export interface IWorkItemsGridState {
     filteredItems?: WorkItem[];
     items?: WorkItem[];
+    loading?: boolean; 
     isContextMenuVisible?: boolean;
     contextMenuTarget?: MouseEvent;
     workItemTypeAndStateColors?: IDictionaryStringTo<{color: string, stateColors: IDictionaryStringTo<string>}>;
     sortColumn?: string;
-    sortOrder?: string;
+    sortOrder?: SortOrder;
     filterText?: string;
 }
 
+export enum SortOrder {
+    ASC,
+    DESC
+}

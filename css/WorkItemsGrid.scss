@@ -1,16 +1,36 @@
-.workitem-list-container {
+.work-items-grid {
     display: flex;
+    flex-direction: column;
+    height: inherit;
 
-    & > div:not(.workitem-list) {
+    .work-items-grid-menu-bar-container {
+        display: flex;
+        flex-direction: row;            
+        margin-bottom: 10px;
+        min-height: 40px;
+        max-height: 40px;
+
+        .work-items-grid-searchbox {
+            margin-bottom: 1px;
+            margin-top: 1px;
+            height: inherit;
+        }
+        
+        .work-items-grid-menu-bar {
+            flex: 1;
+        }
+    }
+
+    & > .ms-Viewport {
         display: flex;
         flex: 1;
     }
 
-    .workitem-list {
+    .work-items-grid-grid {
         overflow: auto;
         flex: 1;
 
-        .title-cell {
+        .work-items-grid-title-cell {
             display: flex;
 
             .overflow-ellipsis {
@@ -26,7 +46,7 @@
             }
         }
 
-        .state-cell {
+        .work-items-grid-state-cell {
             display: flex;
 
             .work-item-type-state-color {

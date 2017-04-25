@@ -19,27 +19,7 @@ body {
 
         & > .message-panel {
             margin-top: 10px;
-        }
-        
-        .menu-container {
-            display: flex;
-            flex-direction: row;            
-
-            .searchbox {
-                margin-bottom: 1px;
-                margin-top: 1px;
-                height: inherit;
-            }
-            
-            .menu-bar {
-                flex: 1;
-            }
-        }
-
-        .workitem-list-container {
-            margin-top: 10px;
-            flex: 1;
-        }        
+        }   
     }    
 }
 

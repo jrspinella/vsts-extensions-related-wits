@@ -10,7 +10,6 @@ import { TagPicker, ITag } from 'OfficeFabric/components/pickers/TagPicker/TagPi
 import { autobind } from "OfficeFabric/Utilities";
 import { PrimaryButton } from "OfficeFabric/Button";
 import { TextField } from "OfficeFabric/TextField";
-import { Panel } from "OfficeFabric/Panel";
 
 import { WorkItemField } from "TFS/WorkItemTracking/Contracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
@@ -25,7 +24,7 @@ import { Settings, Constants } from "./Models";
 
 interface ISettingsPanelProps {
     settings: Settings;
-    onSave: (userPreferenceModel: Settings) => void
+    onSave: (userPreferenceModel: Settings) => void;    
 }
 
 interface ISettingsPanelState {
@@ -91,11 +90,7 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
         });
 
         return (
-            <Panel
-                className="settings-panel"
-                isOpen={true}
-                isLightDismiss={true} >
-                
+            <div className="settings-panel">                
                 <div className="settings-controls">
                     <div className="settings-control-container">
                         <InfoLabel label="Max count" info="Maximum number of work items to retrieve" />
@@ -136,7 +131,7 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
                 <PrimaryButton className="save-button" disabled={!this._isSettingsDirty() || !this._isSettingsValid()} onClick={this._onSaveClick}>
                     Save
                 </PrimaryButton>
-            </Panel>
+            </div>
         );    
     }
 
