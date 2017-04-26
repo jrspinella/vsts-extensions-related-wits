@@ -5,27 +5,24 @@ import * as ReactDOM from "react-dom";
 
 import { IWorkItemNotificationListener, IWorkItemChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
-import { WorkItem, WorkItemType, WorkItemRelationType, WorkItemRelation, Wiql, WorkItemQueryResult, WorkItemField} from "TFS/WorkItemTracking/Contracts";
+import { WorkItem, WorkItemRelationType, WorkItemRelation, Wiql, WorkItemQueryResult, WorkItemField} from "TFS/WorkItemTracking/Contracts";
 import * as WitClient from "TFS/WorkItemTracking/RestClient";
 import Utils_String = require("VSS/Utils/String");
-import Utils_Array = require("VSS/Utils/Array");
 
 import { autobind } from "OfficeFabric/Utilities";
 import { Fabric } from "OfficeFabric/Fabric";
-import { IContextualMenuItem } from "OfficeFabric/components/ContextualMenu/ContextualMenu.Props";
+import { IContextualMenuItem } from "OfficeFabric/ContextualMenu";
 import { Panel, PanelType } from "OfficeFabric/Panel";
 
-import { FluxContext } from "./Components/Interfaces/FluxContext";
-import { InfoLabel } from "VSTS_Extension/components/InfoLabel";
-import { Loading } from "VSTS_Extension/components/Loading";
-import { MessagePanel, MessageType } from "VSTS_Extension/components/MessagePanel";
-import { ExtensionDataManager } from "VSTS_Extension/utilities/ExtensionDataManager";
-import { ActionsCreator, ActionsHub } from "./Actions/ActionsCreator";
-import { StoresHub } from "./Stores/StoresHub";
+import { FluxContext } from "VSTS_Extension/Flux/FluxContext";
+import { InfoLabel } from "VSTS_Extension/Components/Common/InfoLabel";
+import { Loading } from "VSTS_Extension/Components/Common/Loading";
+import { WorkItemsGrid } from "VSTS_Extension/Components/WorkItemsGrid/WorkItemsGrid";
+import { ColumnPosition} from "VSTS_Extension/Components/WorkItemsGrid/WorkItemsGrid.Props";
+import { MessagePanel, MessageType } from "VSTS_Extension/Components/Common/MessagePanel";
+import { ExtensionDataManager } from "VSTS_Extension/Utilities/ExtensionDataManager";
 
 import { Settings, Constants } from "./Models";
-import { WorkItemsGrid } from "./Components/WorkItemsGrid";
-import { ColumnPosition} from "./Components/Interfaces/WorkItemsGrid.Props";
 import { SettingsPanel } from "./SettingsPanel";
 
 interface IRelatedWitsState {

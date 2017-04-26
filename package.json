@@ -38,6 +38,6 @@
     "vss-web-extension-sdk": "^2.115.0",
     "es6-promise": "^4.1.0",
     "office-ui-fabric-react": "^2.21.0",
-    "vsts-extension-react-widgets": "0.0.4"
+    "vsts-extension-react-widgets": "0.0.5"
   }
 }
