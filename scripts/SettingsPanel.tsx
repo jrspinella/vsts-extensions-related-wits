@@ -1,11 +1,8 @@
 import "../css/SettingsPanel.scss";
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
-import { Label } from "OfficeFabric/Label";
-import { Dropdown } from "OfficeFabric/components/Dropdown/Dropdown";
-import { IDropdownOption, IDropdownProps } from "OfficeFabric/components/Dropdown/Dropdown.Props";
+import { Dropdown, IDropdownOption, IDropdownProps } from "OfficeFabric/Dropdown";
 import { TagPicker, ITag } from 'OfficeFabric/components/pickers/TagPicker/TagPicker';
 import { autobind } from "OfficeFabric/Utilities";
 import { PrimaryButton } from "OfficeFabric/Button";
@@ -16,15 +13,15 @@ import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
 import Utils_String = require("VSS/Utils/String");
 import Utils_Array = require("VSS/Utils/Array");
 
-import { ExtensionDataManager } from "VSTS_Extension/ExtensionDataManager";
-import { Loading } from "VSTS_Extension/Loading";
-import { InfoLabel } from "VSTS_Extension/InfoLabel";
+import { ExtensionDataManager } from "VSTS_Extension/Utilities/ExtensionDataManager";
+import { Loading } from "VSTS_Extension/Components/Common/Loading";
+import { InfoLabel } from "VSTS_Extension/Components/Common/InfoLabel";
 
 import { Settings, Constants } from "./Models";
 
 interface ISettingsPanelProps {
     settings: Settings;
-    onSave: (userPreferenceModel: Settings) => void
+    onSave: (userPreferenceModel: Settings) => void;    
 }
 
 interface ISettingsPanelState {
@@ -90,7 +87,7 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
         });
 
         return (
-            <div className="settings-panel">
+            <div className="settings-panel">                
                 <div className="settings-controls">
                     <div className="settings-control-container">
                         <InfoLabel label="Max count" info="Maximum number of work items to retrieve" />

@@ -13,6 +13,5 @@
         },
         "**/*.vsix": true,
         "dist/**/*": true
-    },
-    "vsicons.presets.angular": false
+    }
 }
