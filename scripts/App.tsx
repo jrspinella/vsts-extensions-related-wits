@@ -5,69 +5,55 @@ import * as ReactDOM from "react-dom";
 
 import { IWorkItemNotificationListener, IWorkItemChangedArgs, IWorkItemLoadedArgs } from "TFS/WorkItemTracking/ExtensionContracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
-import { WorkItem, WorkItemRelationType, WorkItemRelation, Wiql, WorkItemQueryResult, WorkItemField} from "TFS/WorkItemTracking/Contracts";
-import * as WitClient from "TFS/WorkItemTracking/RestClient";
+import { WorkItem, WorkItemRelationType, WorkItemRelation, Wiql} from "TFS/WorkItemTracking/Contracts";
 import Utils_String = require("VSS/Utils/String");
 
 import { autobind } from "OfficeFabric/Utilities";
 import { Fabric } from "OfficeFabric/Fabric";
 import { IContextualMenuItem } from "OfficeFabric/ContextualMenu";
 import { Panel, PanelType } from "OfficeFabric/Panel";
+import { MessageBar, MessageBarType } from 'OfficeFabric/MessageBar';
 
-import { FluxContext } from "VSTS_Extension/Flux/FluxContext";
 import { InfoLabel } from "VSTS_Extension/Components/Common/InfoLabel";
 import { Loading } from "VSTS_Extension/Components/Common/Loading";
-import { WorkItemsGrid } from "VSTS_Extension/Components/WorkItemsGrid/WorkItemsGrid";
-import { ColumnPosition} from "VSTS_Extension/Components/WorkItemsGrid/WorkItemsGrid.Props";
-import { MessagePanel, MessageType } from "VSTS_Extension/Components/Common/MessagePanel";
+import { BaseComponent, IBaseComponentProps, IBaseComponentState } from "VSTS_Extension/Components/Common/BaseComponent";
+import { QueryResultGrid } from "VSTS_Extension/Components/Grids/WorkItemGrid/QueryResultGrid";
+import { ColumnPosition} from "VSTS_Extension/Components/Grids/WorkItemGrid/WorkItemGrid.Props";
 import { ExtensionDataManager } from "VSTS_Extension/Utilities/ExtensionDataManager";
 
 import { Settings, Constants } from "./Models";
 import { SettingsPanel } from "./SettingsPanel";
 
-interface IRelatedWitsState {
-    areResultsLoaded?: boolean;
+interface IRelatedWitsState extends IBaseComponentState {
     isWorkItemLoaded?: boolean;
     isNew?: boolean;
+    query?: {wiql: string, project: string};
     settings?: Settings;
     settingsPanelOpen?: boolean;
-    items?: WorkItem[];
-    fieldsMap?: IDictionaryStringTo<WorkItemField>;
     relationsMap?: IDictionaryStringTo<boolean>;
     relationTypes?: WorkItemRelationType[];
 }
 
-export class RelatedWits extends React.Component<void, IRelatedWitsState> {
-    private _context: FluxContext;
-
-    constructor(props: void, context?: any) {
-        super(props, context);        
-        this._context = FluxContext.get();
-
+export class RelatedWits extends BaseComponent<IBaseComponentProps, IRelatedWitsState> {        
+    protected initializeState(): void {
         this.state = {
-            isWorkItemLoaded: false
-        } as IRelatedWitsState;
+            isWorkItemLoaded: false,
+            query: null
+        }
     }
-
-    public componentWillUnmount() {
-        this._context.stores.workItemFieldStore.removeChangedListener(this._onStoreChanged);
-    }
-
-    public componentDidMount() {
-        this._context.stores.workItemFieldStore.addChangedListener(this._onStoreChanged);
-        this._context.actionsCreator.initializeWorkItemFields();
-
+    
+    protected initialize() {        
         VSS.register(VSS.getContribution().id, {
             onLoaded: (args: IWorkItemLoadedArgs) => {
                 if (args.isNew) {
-                    this._updateState({isWorkItemLoaded: true, isNew: true, areResultsLoaded: false});
+                    this.updateState({isWorkItemLoaded: true, isNew: true});
                 }
                 else {
                     this._refreshList();
                 }
             },
             onUnloaded: (args: IWorkItemChangedArgs) => {
-                this._updateState({isWorkItemLoaded: false, items: []});
+                this.updateState({isWorkItemLoaded: false});
             },
             onSaved: (args: IWorkItemChangedArgs) => {
                 this._refreshList();
@@ -86,9 +72,9 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
             return null;
         }
         else if (this.state.isNew) {
-            return <MessagePanel message="Please save the workitem to get the list of related work items." messageType={MessageType.Info} />;
+            return <MessageBar messageBarType={MessageBarType.info}>Please save the workitem to get the list of related work items.</MessageBar>;
         }
-        else if (!this._isDataLoaded()) {
+        else if (!this.state.query) {
             return <Loading />;
         }        
         else {                    
@@ -100,45 +86,51 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
                             isOpen={true}
                             type={PanelType.smallFixedFar}
                             isLightDismiss={true} 
-                            onDismiss={() => this._updateState({settingsPanelOpen: false})}>
+                            onDismiss={() => this.updateState({settingsPanelOpen: false})}>
 
                             <SettingsPanel 
                                 settings={this.state.settings} 
                                 onSave={(settings: Settings) => {
-                                    this._updateState({settings: settings, settingsPanelOpen: false});
+                                    this.updateState({settings: settings, settingsPanelOpen: false});
                                     this._refreshList();
                                 }} />
                         
                         </Panel>
                     }
-                    <WorkItemsGrid 
-                        items={this.state.items}
-                        refreshWorkItems={() => this._getWorkItems(this.state.settings.fields, this.state.settings.sortByField)}
-                        fieldColumns={Constants.DEFAULT_FIELDS_TO_RETRIEVE.map(fr => this.state.fieldsMap[fr.toLowerCase()]).filter(f => f != null)}
-                        contextMenuProps={{
-                            extraContextMenuItems: this._getContextMenuItemsCallback()
-                        }}
+                    <QueryResultGrid
+                        className="related-workitems-list"
+                        wiql={this.state.query.wiql}
+                        project={this.state.query.project}
+                        top={this.state.settings.top}
+                        extraColumns={
+                            [
+                                {
+                                    position: ColumnPosition.FarLeft,
+                                    column: {
+                                        key: "Link status",
+                                        name: "Linked",
+                                        minWidth: 60,
+                                        maxWidth: 100,
+                                        resizable: false,
+                                        onRenderCell: this._renderStatusColumnCell
+                                    }
+                                }
+                            ]
+                        }
                         commandBarProps={{
-                            extraCommandMenuItems:
+                            menuItems:
                                 [
                                     {
                                         key: "settings", name: "Settings", title: "Toggle settings panel", iconProps: {iconName: "Settings"}, 
                                         disabled: this.state.settings == null,
                                         onClick: (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
-                                            this._updateState({settingsPanelOpen: !(this.state.settingsPanelOpen)});
+                                            this.updateState({settingsPanelOpen: !(this.state.settingsPanelOpen)});
                                         }
                                     }
-                                ]                            
+                                ]
                         }}
-                        columnsProps={{
-                            extraColumns: [
-                                {
-                                    key: "Linked",
-                                    name: "Linked",
-                                    renderer: this.state.relationTypes && this.state.relationsMap ? this._renderStatusColumnCell : null,
-                                    position: ColumnPosition.FarLeft
-                                }
-                            ]
+                        contextMenuProps={{
+                            menuItems: this._getContextMenuItemsCallback
                         }}
                     />
                         
@@ -160,55 +152,51 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
             if (availableLinks.length > 0) {
                 return <InfoLabel label="Linked" info={`Linked to this workitem as ${availableLinks.join("; ")}`} />;
             }
+            else {
+                return <InfoLabel label="Not linked" info="This workitem is not linked to the current work item. You can add a link to this workitem by right clicking on the row" />;
+            }
         }
         return null;
     }
     
-    private _getContextMenuItemsCallback(): (items: WorkItem[]) => IContextualMenuItem[] {
-        let addLinkContextMenuItem: (items: WorkItem[]) => IContextualMenuItem[];
-
+    @autobind
+    private _getContextMenuItemsCallback(items: WorkItem[]): IContextualMenuItem[] {
         if (this.state.relationTypes && this.state.relationsMap) {
-            addLinkContextMenuItem = (items: WorkItem[]) => { 
-                return [{
-                    key: "add-link", name: "Add Link", title: "Add as a link to the current workitem", iconProps: {iconName: "Link"}, 
-                    items: this.state.relationTypes.filter(r => r.name != null && r.name.trim() !== "").map(relationType => {
-                        return {
-                            key: relationType.referenceName,
-                            name: relationType.name,
-                            onClick: async (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
-                                const workItemFormService = await WorkItemFormService.getService();
-                                let workItemRelations = items.filter(wi => !this.state.relationsMap[`${wi.url}_${relationType.referenceName}`]).map(w => {
-                                    return {
-                                        rel: relationType.referenceName,
-                                        attributes: {
-                                            isLocked: false
-                                        },
-                                        url: w.url
-                                    } as WorkItemRelation;
-                                });
+            return [{
+                key: "add-link", name: "Add Link", title: "Add as a link to the current workitem", iconProps: {iconName: "Link"}, 
+                items: this.state.relationTypes.filter(r => r.name != null && r.name.trim() !== "").map(relationType => {
+                    return {
+                        key: relationType.referenceName,
+                        name: relationType.name,
+                        onClick: async (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
+                            const workItemFormService = await WorkItemFormService.getService();
+                            let workItemRelations = items.filter(wi => !this.state.relationsMap[`${wi.url}_${relationType.referenceName}`]).map(w => {
+                                return {
+                                    rel: relationType.referenceName,
+                                    attributes: {
+                                        isLocked: false
+                                    },
+                                    url: w.url
+                                } as WorkItemRelation;
+                            });
 
-                                if (workItemRelations) {
-                                    workItemFormService.addWorkItemRelations(workItemRelations);
-                                }                                
-                            }
-                        };
-                    }),
-                    onClick: (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
-                        
-                    }
-                }]
-            };
+                            if (workItemRelations) {
+                                workItemFormService.addWorkItemRelations(workItemRelations);
+                            }                                
+                        }
+                    };
+                }),
+                onClick: (event?: React.MouseEvent<HTMLElement>, menuItem?: IContextualMenuItem) => {
+                    
+                }
+            }]
         }
 
-        return addLinkContextMenuItem;
-    }
-
-    private _updateState(updatedStates: IRelatedWitsState) {
-        this.setState({...this.state, ...updatedStates});
+        return [];
     }
 
     private async _refreshList(): Promise<void> {
-        this._updateState({isWorkItemLoaded: true, isNew: false, areResultsLoaded: false});
+        this.updateState({isWorkItemLoaded: true, isNew: false, query: null});
 
         if (!this.state.settings) {
             await this._initializeSettings();
@@ -218,28 +206,10 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
             this._initializeWorkItemRelationTypes();
         }
 
-        const items = await this._getWorkItems(this.state.settings.fields, this.state.settings.sortByField);
-        this._updateState({areResultsLoaded: true, items: items});
+        const wiql = await this._createWiql(this.state.settings.fields, this.state.settings.sortByField);
+        this.updateState({query: wiql});
 
         this._initializeLinksData();
-    }
-
-    private async _getWorkItems(fieldsToSeek: string[], sortByField: string): Promise<WorkItem[]> {
-        let {project, wiql} = await this._createWiql(fieldsToSeek, sortByField);
-        let queryResults = await WitClient.getClient().queryByWiql({ query: wiql }, project, null, false, this.state.settings.top);
-        return this._readWorkItemsFromQueryResults(queryResults);
-    }
-
-    private async _readWorkItemsFromQueryResults(queryResult: WorkItemQueryResult): Promise<WorkItem[]> {
-        let workItemIds = queryResult.workItems.map(workItem => workItem.id);
-        let workItems: WorkItem[];
-
-        if (workItemIds.length > 0) {
-            return await WitClient.getClient().getWorkItems(workItemIds);
-        }
-        else {
-            return [];
-        }
     }
 
     private async _createWiql(fieldsToSeek: string[], sortByField: string): Promise<{project: string, wiql: string}> {
@@ -295,13 +265,13 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
             settings.top = Constants.DEFAULT_RESULT_SIZE;
         }
 
-        this._updateState({settings: settings});
+        this.updateState({settings: settings});
     }
 
     private async _initializeWorkItemRelationTypes() {
         const workItemFormService = await WorkItemFormService.getService();
         const relationTypes = await workItemFormService.getWorkItemRelationTypes();
-        this._updateState({relationTypes: relationTypes});
+        this.updateState({relationTypes: relationTypes});
     }
 
     private async _initializeLinksData() {
@@ -313,22 +283,7 @@ export class RelatedWits extends React.Component<void, IRelatedWitsState> {
             relationsMap[`${relation.url}_${relation.rel}`] = true;
         });
 
-        this._updateState({relationsMap: relationsMap});
-    }
-
-    @autobind
-    private _onStoreChanged() {
-         if (!this.state.fieldsMap && this._context.stores.workItemFieldStore.isLoaded()) {
-            const fields = this._context.stores.workItemFieldStore.getAll();
-            let fieldsMap = {};
-            fields.forEach(f => fieldsMap[f.referenceName.toLowerCase()] = f);
-
-            this._updateState({fieldsMap: fieldsMap});
-         }
-    }
-
-    private _isDataLoaded(): boolean {
-        return this.state.areResultsLoaded && this.state.fieldsMap != null;
+        this.updateState({relationsMap: relationsMap});
     }
 }
 

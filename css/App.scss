@@ -19,8 +19,16 @@ body {
 
         & > .message-panel {
             margin-top: 10px;
-        }   
-    }    
+        }
+
+        .related-workitems-list {
+            .info-label {
+                .info-icon {
+                    padding-top: 0;
+                }
+            }
+        }
+    }
 }
 
 .callout-container {
