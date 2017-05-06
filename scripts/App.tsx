@@ -14,6 +14,7 @@ import { IContextualMenuItem } from "OfficeFabric/ContextualMenu";
 import { Panel, PanelType } from "OfficeFabric/Panel";
 import { MessageBar, MessageBarType } from 'OfficeFabric/MessageBar';
 
+import { LazyLoad } from "VSTS_Extension/Components/Common/LazyLoad";
 import { InfoLabel } from "VSTS_Extension/Components/Common/InfoLabel";
 import { Loading } from "VSTS_Extension/Components/Common/Loading";
 import { BaseComponent, IBaseComponentProps, IBaseComponentState } from "VSTS_Extension/Components/Common/BaseComponent";
@@ -22,7 +23,6 @@ import { ColumnPosition} from "VSTS_Extension/Components/Grids/WorkItemGrid/Work
 import { ExtensionDataManager } from "VSTS_Extension/Utilities/ExtensionDataManager";
 
 import { Settings, Constants } from "./Models";
-import { SettingsPanel } from "./SettingsPanel";
 
 interface IRelatedWitsState extends IBaseComponentState {
     isWorkItemLoaded?: boolean;
@@ -34,7 +34,7 @@ interface IRelatedWitsState extends IBaseComponentState {
     relationTypes?: WorkItemRelationType[];
 }
 
-export class RelatedWits extends BaseComponent<IBaseComponentProps, IRelatedWitsState> {        
+export class RelatedWits extends BaseComponent<IBaseComponentProps, IRelatedWitsState> {
     protected initializeState(): void {
         this.state = {
             isWorkItemLoaded: false,
@@ -77,9 +77,9 @@ export class RelatedWits extends BaseComponent<IBaseComponentProps, IRelatedWits
         else if (!this.state.query) {
             return <Loading />;
         }        
-        else {                    
+        else {
             return (
-                <Fabric className="fabric-container">                    
+                <Fabric className="fabric-container">
                     { 
                         this.state.settingsPanelOpen && 
                         <Panel
@@ -88,13 +88,16 @@ export class RelatedWits extends BaseComponent<IBaseComponentProps, IRelatedWits
                             isLightDismiss={true} 
                             onDismiss={() => this.updateState({settingsPanelOpen: false})}>
 
-                            <SettingsPanel 
-                                settings={this.state.settings} 
-                                onSave={(settings: Settings) => {
-                                    this.updateState({settings: settings, settingsPanelOpen: false});
-                                    this._refreshList();
-                                }} />
-                        
+                            <LazyLoad module="scripts/SettingsPanel">
+                                {(SettingsPanel) => (
+                                    <SettingsPanel.SettingsPanel
+                                        settings={this.state.settings} 
+                                        onSave={(settings: Settings) => {
+                                            this.updateState({settings: settings, settingsPanelOpen: false});
+                                            this._refreshList();
+                                        }} />
+                                )}
+                            </LazyLoad>
                         </Panel>
                     }
                     <QueryResultGrid
@@ -150,10 +153,10 @@ export class RelatedWits extends BaseComponent<IBaseComponentProps, IRelatedWits
             });
 
             if (availableLinks.length > 0) {
-                return <InfoLabel label="Linked" info={`Linked to this workitem as ${availableLinks.join("; ")}`} />;
+                return <div className="linked-cell"><InfoLabel label="Linked" info={`Linked to this workitem as ${availableLinks.join("; ")}`} /></div>;
             }
             else {
-                return <InfoLabel label="Not linked" info="This workitem is not linked to the current work item. You can add a link to this workitem by right clicking on the row" />;
+                return <div className="unlinked-cell"><InfoLabel label="Not linked" info="This workitem is not linked to the current work item. You can add a link to this workitem by right clicking on the row" /></div>;
             }
         }
         return null;

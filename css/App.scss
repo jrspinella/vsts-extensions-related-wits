@@ -27,6 +27,22 @@ body {
                     padding-top: 0;
                 }
             }
+
+            .linked-cell {
+                .info-label {
+                    .info-label-text {
+                        color: green;
+                    }
+                }
+            }
+
+            .unlinked-cell {
+                .info-label {
+                    .info-label-text {
+                        color: red;
+                    }
+                }
+            }
         }
     }
 }
