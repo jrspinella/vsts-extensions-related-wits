@@ -26,17 +26,17 @@
         "css-loader": "^0.28.1",
         "ts-loader": "^2.0.3",
         "node-sass": "^4.5.2",
+        "tfx-cli": "^0.4.5",
         "typescript": "^2.3.2",
-        "typings": "^2.1.1",        
-        "uglifyjs-webpack-plugin": "^0.4.3",        
-        "copy-webpack-plugin": "4.0.1",
-        "tfx-cli": "^0.4.5"
+        "typings": "^2.1.1",
+        "uglifyjs-webpack-plugin": "^0.4.3",
+        "copy-webpack-plugin": "^4.0.1"
     },
     "dependencies": {
         "requirejs": "^2.3.3",
-        "vss-web-extension-sdk": "^2.115.0",
+        "vss-web-extension-sdk": "^2.116.1",
         "es6-promise": "^4.1.0",
-        "office-ui-fabric-react": "^2.25.1",
-        "vsts-extension-react-widgets": "0.0.10"
+        "office-ui-fabric-react": "^2.31.0",
+        "vsts-extension-react-widgets": "0.0.15"
     }
 }
