@@ -6,8 +6,8 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
     target: "web",
     entry: {
-        App: "./scripts/App.tsx",
-        SettingsPanel: "./scripts/SettingsPanel.tsx"
+        App: "./src/scripts/App.tsx",
+        SettingsPanel: "./src/scripts/SettingsPanel.tsx"
     },
     output: {
         filename: "scripts/[name].js",
@@ -25,42 +25,53 @@ module.exports = {
         extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js"],
         moduleExtensions: ["-loader"],
         alias: { 
-            "OfficeFabric": path.resolve(__dirname, "node_modules/office-ui-fabric-react/lib-amd"),
-            "VSTS_Extension": path.resolve(__dirname, "node_modules/vsts-extension-react-widgets/lib-amd")
-        }
+            "OfficeFabric": path.resolve(__dirname, "node_modules/office-ui-fabric-react/lib"),
+            "VSSUI": path.resolve(__dirname, "node_modules/vss-ui"),
+            "VSTS_Extension_Widgets": path.resolve(__dirname, "node_modules/vsts-extension-react-widgets/lib")
+        }        
     },
     module: {
-        loaders: [
+        rules: [
             {
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                use: "ts-loader"
             },
             {
                 test: /\.s?css$/,
-                loaders: ["style-loader", "css-loader", "sass-loader"]
+                use: [
+                    { loader: "style-loader" },
+                    { loader: "css-loader" },
+                    { loader: "sass-loader" }
+                ]
+            },
+            {
+                test: /\.(otf|eot|svg|ttf|woff|woff2|gif)(\?.+)?$/,
+                use: "url-loader?limit=4096&name=[name].[ext]"
             }
         ]
     },
     plugins: [
+        new webpack.DefinePlugin({
+            "process.env.NODE_ENV": JSON.stringify("production")
+        }),
         new UglifyJSPlugin({
-            compress: {
-                warnings: false
-            },
-            output: {
-                comments: false
+            uglifyOptions: {
+                output: {
+                    comments: false,
+                    beautify: false
+                }
             }
         }),
         new CopyWebpackPlugin([
-            { from: "./node_modules/vss-web-extension-sdk/lib/VSS.SDK.min.js", to: "scripts/libs/VSS.SDK.min.js" },
-            { from: "./node_modules/es6-promise/dist/es6-promise.min.js", to: "scripts/libs/es6-promise.min.js" },
-            { from: "./node_modules/requirejs/require.js", to: "scripts/libs/require.js" },
+            { from: "./node_modules/vss-web-extension-sdk/lib/VSS.SDK.min.js", to: "3rdParty/VSS.SDK.min.js" },
+            { from: "./node_modules/es6-promise/dist/es6-promise.min.js", to: "3rdParty/es6-promise.min.js" },
+            { from: "./node_modules/office-ui-fabric-react/dist/css/fabric.min.css", to: "3rdParty/fabric.min.css" },
             
-            { from: "./node_modules/office-ui-fabric-react/dist/css/fabric.min.css", to: "css/libs/fabric.min.css" },
-
-            { from: "./img", to: "img" },
-            { from: "./index.html", to: "./" },
-            { from: "./README.md", to: "README.md" },
-            { from: "./vss-extension.json", to: "vss-extension.json" }
+            { from: "./src/configs", to: "configs" },
+            { from: "./src/images", to: "images" },
+            { from: "./src/index.html", to: "index.html" },
+            { from: "./src/vss-extension.json", to: "vss-extension.json" },
+            { from: "./README.md", to: "README.md" }
         ])
     ]
 }

@@ -7,10 +7,17 @@
         "lib": ["dom", "es2015.promise", "es5"],
         "jsx": "react",
         "experimentalDecorators": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "forceConsistentCasingInFileNames": true,
         "baseUrl": ".",
+        "allowJs": true,
+        "noEmitHelpers": true,
+        "importHelpers": true,
         "paths": {
-            "OfficeFabric/*": ["node_modules/office-ui-fabric-react/lib-amd/*"],
-            "VSTS_Extension/*": ["node_modules/vsts-extension-react-widgets/lib-amd/*"]
+            "OfficeFabric/*": ["node_modules/office-ui-fabric-react/lib/*"],
+            "VSSUI/*": ["node_modules/vss-ui/*"],
+            "VSTS_Extension_Widgets/*": ["node_modules/vsts-extension-react-widgets/lib/*"]
         },
         "types": [
             "q",
@@ -19,9 +26,6 @@
             "jquery",
             "react",
             "react-dom"
-        ],
-        "typeRoots": [
-            "../node_modules/@types"
         ]
     },
     "exclude": [

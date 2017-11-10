@@ -1,0 +1,52 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+#ext-container {
+    overflow: hidden;
+    margin: 10px 0 0 10px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    .fabric-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+
+        & > .message-panel {
+            margin-top: 10px;
+        }
+
+        .related-workitems-list {
+            .info-label {
+                .info-icon {
+                    padding-top: 0;
+                }
+            }
+
+            .linked-cell {
+                .info-label {
+                    .info-label-text {
+                        color: green;
+                    }
+                }
+            }
+
+            .unlinked-cell {
+                .info-label {
+                    .info-label-text {
+                        color: red;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.callout-container {
+    max-height: 200px;
+}
