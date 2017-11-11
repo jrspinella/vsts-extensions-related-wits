@@ -13,15 +13,18 @@ import { autobind } from "OfficeFabric/Utilities";
 import { WorkItemField } from "TFS/WorkItemTracking/Contracts";
 import { WorkItemFormService } from "TFS/WorkItemTracking/Services";
 
-import { InfoLabel, Loading } from "VSTS_Extension_Widgets/Components";
-import { ExtensionDataManager, StringUtils, ArrayUtils } from "VSTS_Extension_Widgets/Utilities";
+import { InfoLabel } from "VSTS_Extension_Widgets/Components/InfoLabel";
+import { Loading } from "VSTS_Extension_Widgets/Components/Loading";
+import { ArrayUtils } from "VSTS_Extension_Widgets/Utilities/Array";
+import { ExtensionDataManager } from "VSTS_Extension_Widgets/Utilities/ExtensionDataManager";
+import { StringUtils } from "VSTS_Extension_Widgets/Utilities/String";
 
-interface ISettingsPanelProps {
+export interface ISettingsPanelProps {
     settings: Settings;
     onSave: (userPreferenceModel: Settings) => void;    
 }
 
-interface ISettingsPanelState {
+export interface ISettingsPanelState {
     loading: boolean;
     sortField?: WorkItemField;
     queryFields?: WorkItemField[];
@@ -49,17 +52,17 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
         const fields = await workItemFormService.getFields();
 
         const sortableFields = fields.filter(field => 
-            ArrayUtils.contains(Constants.SortableFieldTypes, field.type) 
-            && !Utils_Array.contains(Constants.ExcludedFields, field.referenceName)).sort(this._fieldNameComparer);
+            Constants.SortableFieldTypes.indexOf(field.type) !== -1
+            && !ArrayUtils.contains(Constants.ExcludedFields, field.referenceName, (f1, f2) => StringUtils.equals(f1, f2, true))).sort(this._fieldNameComparer);
 
         const queryableFields = fields.filter(field => 
-            (Utils_Array.contains(Constants.QueryableFieldTypes, field.type) || Utils_String.equals(field.referenceName, "System.Tags", true))
-            && !Utils_Array.contains(Constants.ExcludedFields, field.referenceName));
+            (Constants.QueryableFieldTypes.indexOf(field.type) !== -1 || StringUtils.equals(field.referenceName, "System.Tags", true))
+            && !ArrayUtils.contains(Constants.ExcludedFields, field.referenceName, (f1, f2) => StringUtils.equals(f1, f2, true)));
 
-        const sortField = Utils_Array.first(sortableFields, field => Utils_String.equals(field.referenceName, this.props.settings.sortByField, true)) ||
-                          Utils_Array.first(sortableFields, field => Utils_String.equals(field.referenceName, Constants.DEFAULT_SORT_BY_FIELD, true));
+        const sortField = ArrayUtils.first(sortableFields, field => StringUtils.equals(field.referenceName, this.props.settings.sortByField, true)) ||
+                          ArrayUtils.first(sortableFields, field => StringUtils.equals(field.referenceName, Constants.DEFAULT_SORT_BY_FIELD, true));
 
-        let queryFields = this.props.settings.fields.map(fName => Utils_Array.first(queryableFields, field => Utils_String.equals(field.referenceName, fName, true)));
+        let queryFields = this.props.settings.fields.map(fName => ArrayUtils.first(queryableFields, field => StringUtils.equals(field.referenceName, fName, true)));
         queryFields = queryFields.filter(f => f != null);
 
         this.setState({...this.state, loading: false, sortableFields: sortableFields, queryableFields: queryableFields, sortField: sortField, queryFields: queryFields});
@@ -79,7 +82,7 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
                 key: field.referenceName,
                 index: index,
                 text: field.name,
-                selected: Utils_String.equals(this.state.sortField.referenceName, field.referenceName, true)
+                selected: StringUtils.equals(this.state.sortField.referenceName, field.referenceName, true)
             }
         });
 
@@ -149,8 +152,8 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
 
     private _isSettingsDirty(): boolean {
         return this.props.settings.top.toString() !== this.state.top
-            || !Utils_String.equals(this.props.settings.sortByField, this.state.sortField.referenceName, true)
-            || !Utils_Array.arrayEquals(this.props.settings.fields, this.state.queryFields, (item1: string, item2: WorkItemField) => Utils_String.equals(item1, item2.referenceName, true))
+            || !StringUtils.equals(this.props.settings.sortByField, this.state.sortField.referenceName, true)
+            || !ArrayUtils.arrayEquals(this.props.settings.fields, this.state.queryFields.map(f => f.referenceName), (f1, f2) => StringUtils.equals(f1, f2, true));
     }
 
     private _isSettingsValid(): boolean {
@@ -195,13 +198,13 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
 
     @autobind
     private _updateSortField(option: IDropdownOption) {
-        const sortField = Utils_Array.first(this.state.sortableFields, (field: WorkItemField) => Utils_String.equals(field.referenceName, option.key as string, true));
+        const sortField = ArrayUtils.first(this.state.sortableFields, (field: WorkItemField) => StringUtils.equals(field.referenceName, option.key as string, true));
         this.setState({...this.state, sortField: sortField});
     }
 
     @autobind
     private _updateQueryFields(items: ITag[]) {
-        const queryFields = items.map((item: ITag) => Utils_Array.first(this.state.queryableFields, (field: WorkItemField) => Utils_String.equals(field.referenceName, item.key, true)));
+        const queryFields = items.map((item: ITag) => ArrayUtils.first(this.state.queryableFields, (field: WorkItemField) => StringUtils.equals(field.referenceName, item.key, true)));
         this.setState({...this.state, queryFields: queryFields});
     }
 
@@ -214,7 +217,7 @@ export class SettingsPanel extends React.Component<ISettingsPanelProps, ISetting
     private _onFieldFilterChanged(filterText: string, tagList: ITag[]): ITag[] {
         return filterText
             ? this.state.queryableFields.filter(field => field.name.toLowerCase().indexOf(filterText.toLowerCase()) === 0 
-                && Utils_Array.findIndex(tagList, (tag: ITag) => Utils_String.equals(tag.key, field.referenceName, true)) === -1).map(field => {
+                && ArrayUtils.findIndex(tagList, (tag: ITag) => StringUtils.equals(tag.key, field.referenceName, true)) === -1).map(field => {
                     return { key: field.referenceName, name: field.name};
                 }) 
             : [];

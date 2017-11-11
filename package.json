@@ -17,6 +17,8 @@
         "@types/react": "^16.0.9",
         "@types/react-dom": "^16.0.0",
         "@types/jquery": "2.0.41",
+        "react": "^15.3.2",
+        "react-dom": "^15.3.2",
         "webpack": "3.8.1",
         "webpack-dev-server": "2.9.4",
         "rimraf": "2.6.2",
@@ -30,14 +32,15 @@
         "uglifyjs-webpack-plugin": "1.0.1",
         "tfx-cli": "0.4.11",
         "copy-webpack-plugin": "4.2.0",
-        "url-loader": "0.6.2"
+        "url-loader": "0.6.2",
+        "file-loader": "1.1.5"
     },
     "dependencies": {
         "es6-promise": "4.1.1",
         "vss-ui": "3.125.2",
         "vss-web-extension-sdk": "4.125.2",
         "office-ui-fabric-react": "~5.9.0",
-        "vsts-extension-react-widgets": "1.9.2",
+        "vsts-extension-react-widgets": "1.9.3",
         "tslib": "~1.7.1"
     }
 }

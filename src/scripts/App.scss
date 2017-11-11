@@ -5,7 +5,6 @@ body {
 
 #ext-container {
     overflow: hidden;
-    margin: 10px 0 0 10px;
     position: absolute;
     top: 0;
     left: 0;
@@ -21,24 +20,44 @@ body {
             margin-top: 10px;
         }
 
-        .related-workitems-list {
-            .info-label {
-                .info-icon {
-                    padding-top: 0;
-                }
-            }
+        .grid-container {
+            overflow: auto;
+            height: 100%;
+            position: relative;
 
-            .linked-cell {
-                .info-label {
-                    .info-label-text {
-                        color: green;
+            .work-item-grid {
+                overflow-x: initial;
+                overflow-y: initial;
+
+                .ms-DetailsRow-check {
+                    height: 100%;
+                }
+
+                .item-grid-cell {                    
+                    &.identity-view {
+                        .ms-Persona-details {
+                            padding: 0 0 0 5px;
+                        }
+    
+                        .ms-Persona-primaryText {
+                            font-size: 13px;
+                        }
                     }
                 }
-            }
 
-            .unlinked-cell {
                 .info-label {
-                    .info-label-text {
+                    align-items: center;
+
+                    .info-icon {
+                        padding-top: 0;
+                        vertical-align: top;
+                    }
+
+                    &.linked-cell .info-label-text {
+                        color: green;
+                    }
+
+                    &.unlinked-cell .info-label-text {
                         color: red;
                     }
                 }
@@ -49,4 +68,19 @@ body {
 
 .callout-container {
     max-height: 200px;
+}
+
+.ms-font-m {
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.ms-font-xl {
+    font-size: 21px;
+    font-weight: 100;
+}
+
+.ms-font-xxl {
+    font-size: 28px;
+    font-weight: 100;   
 }

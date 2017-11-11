@@ -27,7 +27,7 @@ module.exports = {
         alias: { 
             "OfficeFabric": path.resolve(__dirname, "node_modules/office-ui-fabric-react/lib"),
             "VSSUI": path.resolve(__dirname, "node_modules/vss-ui"),
-            "VSTS_Extension_Widgets": path.resolve(__dirname, "node_modules/vsts-extension-react-widgets/lib")
+            "VSTS_Extension_Widgets": path.resolve(__dirname, "node_modules/vsts-extension-react-widgets")
         }        
     },
     module: {
@@ -65,7 +65,6 @@ module.exports = {
         new CopyWebpackPlugin([
             { from: "./node_modules/vss-web-extension-sdk/lib/VSS.SDK.min.js", to: "3rdParty/VSS.SDK.min.js" },
             { from: "./node_modules/es6-promise/dist/es6-promise.min.js", to: "3rdParty/es6-promise.min.js" },
-            { from: "./node_modules/office-ui-fabric-react/dist/css/fabric.min.css", to: "3rdParty/fabric.min.css" },
             
             { from: "./src/configs", to: "configs" },
             { from: "./src/images", to: "images" },

@@ -17,7 +17,7 @@
         "paths": {
             "OfficeFabric/*": ["node_modules/office-ui-fabric-react/lib/*"],
             "VSSUI/*": ["node_modules/vss-ui/*"],
-            "VSTS_Extension_Widgets/*": ["node_modules/vsts-extension-react-widgets/lib/*"]
+            "VSTS_Extension_Widgets/*": ["node_modules/vsts-extension-react-widgets/*"]
         },
         "types": [
             "q",

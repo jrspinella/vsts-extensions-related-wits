@@ -6,8 +6,17 @@ export interface Settings {
     top?: number;
 }
 
+export enum WorkItemFieldNames {
+    Title = "System.Title",
+    ID = "System.ID",
+    AssignedTo = "System.AssignedTo",
+    State = "System.State",
+    AreaPath = "System.AreaPath",
+    WorkItemType = "System.WorkItemType"
+}
+
 export class Constants {
-    public static StorageKey = "RelatedWorkItemsFields";
+    public static StorageKey = "rwf";
     public static UserScope = { scopeType: "User" };
 
     public static DEFAULT_SORT_BY_FIELD = "System.ChangedDate";
