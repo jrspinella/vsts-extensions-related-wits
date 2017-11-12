@@ -15,6 +15,11 @@ export enum WorkItemFieldNames {
     WorkItemType = "System.WorkItemType"
 }
 
+export interface ISortState {
+    sortKey: WorkItemFieldNames;
+    isSortedDescending: boolean;
+}
+
 export class Constants {
     public static StorageKey = "rwf";
     public static UserScope = { scopeType: "User" };

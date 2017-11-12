@@ -6,8 +6,8 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
     target: "web",
     entry: {
-        App: "./src/scripts/App.tsx",
-        SettingsPanel: "./src/scripts/SettingsPanel.tsx"
+        App: "./src/scripts/Components/App.tsx",
+        SettingsPanel: "./src/scripts/Components/SettingsPanel.tsx"
     },
     output: {
         filename: "scripts/[name].js",
@@ -54,12 +54,19 @@ module.exports = {
         new webpack.DefinePlugin({
             "process.env.NODE_ENV": JSON.stringify("production")
         }),
-        new UglifyJSPlugin({
-            uglifyOptions: {
-                output: {
-                    comments: false,
-                    beautify: false
-                }
+        new webpack.optimize.UglifyJsPlugin({
+            minimize: true,
+            compress: {
+                warnings: false,
+                screw_ie8: true,
+                conditionals: true,
+                unused: true,
+                comparisons: true,
+                sequences: true,
+                dead_code: true,
+                evaluate: true,
+                if_return: true,
+                join_vars: true
             }
         }),
         new CopyWebpackPlugin([

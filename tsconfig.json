@@ -1,10 +1,10 @@
 {
     "compilerOptions": {
-        "module": "amd",
         "moduleResolution": "node",
         "sourceMap": false,
         "target": "es5",
-        "lib": ["dom", "es2015.promise", "es5"],
+        "lib": ["es5", "es6", "dom", "es2015.promise"],
+        "module": "es6",
         "jsx": "react",
         "experimentalDecorators": true,
         "noUnusedLocals": true,

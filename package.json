@@ -8,7 +8,7 @@
     "scripts": {
         "clean": "rimraf dist *.vsix",
         "clean:all": "npm run clean && rimraf typings node_modules",
-        "build": "npm run clean && mkdir dist && webpack --display-error-details --progress --colors --output-path ./dist -p",
+        "build": "npm run clean && mkdir dist && webpack --profile --json > stats.json --display-error-details --progress --colors --output-path ./dist -p",
         "start": "webpack-dev-server -d --hot --progress --colors --https --content-base ./src/ --port 8888",
         "package": "npm run build && node ./dist/configs/package",
         "postinstall": "typings install"
@@ -40,7 +40,7 @@
         "vss-ui": "3.125.2",
         "vss-web-extension-sdk": "4.125.2",
         "office-ui-fabric-react": "~5.9.0",
-        "vsts-extension-react-widgets": "1.9.3",
+        "vsts-extension-react-widgets": "1.9.4",
         "tslib": "~1.7.1"
     }
 }
