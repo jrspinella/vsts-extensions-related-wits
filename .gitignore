@@ -5,3 +5,4 @@ typings
 .vscode/*.db
 .vscode/*.db-wal
 npm-debug.log
+stats.json
